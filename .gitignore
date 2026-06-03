@@ -1,0 +1,11 @@
+node_modules/
+*.xlsx
+*.xls
+~$*
+.DS_Store
+scratch/
+debug_output.txt
+find_skipped_amounts.js
+read_all_columns.js
+read_formula.js
+read_formula_all.js

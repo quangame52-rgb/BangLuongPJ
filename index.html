@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản Lý Lương & KPI – Spa Management</title>
+  <meta name="description" content="Phần mềm quản lý lương, KPI, tour dịch vụ và báo cáo doanh số cho spa/thẩm mỹ viện." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">✦</div>
+      <span class="logo-text">SpaPayroll</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')">
+        <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-item" data-page="nhanvien" onclick="switchPage('nhanvien')">
+        <span class="nav-icon">👥</span><span class="nav-label">Nhân Viên</span>
+      </button>
+      <button class="nav-item" data-page="chamcong" onclick="switchPage('chamcong')">
+        <span class="nav-icon">🕐</span><span class="nav-label">Chấm Công</span>
+      </button>
+      <button class="nav-item" data-page="tour" onclick="switchPage('tour')">
+        <span class="nav-icon">🗺️</span><span class="nav-label">Tour Dịch Vụ</span>
+      </button>
+      <button class="nav-item" data-page="kpi" onclick="switchPage('kpi')">
+        <span class="nav-icon">🎯</span><span class="nav-label">KPI Doanh Số</span>
+      </button>
+      <button class="nav-item" data-page="luong" onclick="switchPage('luong')">
+        <span class="nav-icon">💰</span><span class="nav-label">Bảng Lương</span>
+      </button>
+      <button class="nav-item" data-page="khautru" onclick="switchPage('khautru')">
+        <span class="nav-icon">📋</span><span class="nav-label">Khấu Trừ</span>
+      </button>
+      <button class="nav-item" data-page="phucap" onclick="switchPage('phucap')">
+        <span class="nav-icon">🎁</span><span class="nav-label">Phụ Cấp & Thưởng</span>
+      </button>
+      <button class="nav-item" data-page="baocao" onclick="switchPage('baocao')">
+        <span class="nav-icon">📈</span><span class="nav-label">Báo Cáo</span>
+      </button>
+      <div style="height:1px;background:var(--border);margin:8px 10px"></div>
+      <button class="nav-item" data-page="caidat" onclick="switchPage('caidat')">
+        <span class="nav-icon">⚙️</span><span class="nav-label">Cài Đặt</span>
+      </button>
+      <button class="nav-item" data-page="nhatky" onclick="switchPage('nhatky')">
+        <span class="nav-icon">📝</span><span class="nav-label">Nhật Ký</span><span class="log-badge" id="logBadge" style="display:none"></span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="month-selector">
+        <label>Tháng/Năm</label>
+        <select id="globalMonth" onchange="onMonthChange()">
+          <option value="1-2026">Tháng 1/2026</option>
+          <option value="2-2026">Tháng 2/2026</option>
+          <option value="3-2026">Tháng 3/2026</option>
+          <option value="4-2026">Tháng 4/2026</option>
+          <option value="5-2026" selected>Tháng 5/2026</option>
+          <option value="6-2026">Tháng 6/2026</option>
+          <option value="7-2026">Tháng 7/2026</option>
+          <option value="8-2026">Tháng 8/2026</option>
+          <option value="9-2026">Tháng 9/2026</option>
+          <option value="10-2026">Tháng 10/2026</option>
+          <option value="11-2026">Tháng 11/2026</option>
+          <option value="12-2026">Tháng 12/2026</option>
+        </select>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn btn-accent" onclick="document.getElementById('masterImportFile').click()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">📂 Import Tổng Hợp</button>
+        <input type="file" id="masterImportFile" accept=".xlsx,.xls" style="display:none" onchange="handleMasterImport(event)" />
+        <button class="btn btn-primary" onclick="exportData()">⬇ Xuất Excel</button>
+        <button class="btn btn-ghost" onclick="printPage()">🖨️ In</button>
+      </div>
+    </header>
+
+    <!-- PAGES -->
+    <div class="page-container">
+
+      <!-- DASHBOARD PAGE -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-header">
+          <h1>Tổng Quan <span class="month-badge" id="dashMonthBadge">T2/2026</span></h1>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card accent-blue">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+              <div class="stat-value" id="statNV">10</div>
+              <div class="stat-label">Nhân Viên</div>
+            </div>
+          </div>
+          <div class="stat-card accent-green">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+              <div class="stat-value" id="statTongLuong">0đ</div>
+              <div class="stat-label">Tổng Chi Lương</div>
+            </div>
+          </div>
+          <div class="stat-card accent-purple">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-info">
+              <div class="stat-value" id="statDoanhSo">0đ</div>
+              <div class="stat-label">Tổng Doanh Số</div>
+            </div>
+          </div>
+          <div class="stat-card accent-orange">
+            <div class="stat-icon">🗺️</div>
+            <div class="stat-info">
+              <div class="stat-value" id="statTour">0đ</div>
+              <div class="stat-label">Tổng Tour</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header"><h3>Lương Theo Phòng Ban</h3></div>
+            <canvas id="chartLuongPhong" height="220"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Top Doanh Số</h3></div>
+            <canvas id="chartTopDS" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="card mt-20">
+          <div class="card-header"><h3>Bảng Lương Tóm Tắt</h3></div>
+          <div class="table-wrap">
+            <table id="dashSummaryTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Nhân Viên</th>
+                  <th>Chức Vụ</th>
+                  <th>Phòng Ban</th>
+                  <th>Ngày Công</th>
+                  <th>Tour</th>
+                  <th>KPI Bonus</th>
+                  <th>Thực Lĩnh</th>
+                </tr>
+              </thead>
+              <tbody id="dashSummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- NHÂN VIÊN PAGE -->
+      <div id="page-nhanvien" class="page">
+        <div class="page-header">
+          <h1>Quản Lý Nhân Viên</h1>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" onclick="openBulkEdit()">✏️ Sửa Toàn Bộ</button>
+            <button class="btn btn-primary" onclick="addNV()">+ Thêm Nhân Viên</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <input type="text" class="search-input" placeholder="🔍 Tìm kiếm nhân viên..." oninput="filterNV(this.value)" />
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="nvTable">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Mã NV</th>
+                  <th>Họ Tên</th>
+                  <th>Chức Vụ</th>
+                  <th>Phòng Ban</th>
+                  <th>Trạng Thái</th>
+                  <th>Lương Cơ Bản</th>
+                  <th>Ngày Công Chuẩn</th>
+                  <th>Ký Quỹ</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="nvBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHẤM CÔNG PAGE -->
+      <div id="page-chamcong" class="page">
+        <div class="page-header">
+          <h1>Bảng Chấm Công <span class="month-badge" id="ccMonthBadge">T2/2026</span></h1>
+          <div class="header-actions">
+            <button class="btn btn-danger" onclick="deleteAllCC()">🗑️ Xóa toàn bộ</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('ccFileInput').click()">📂 Import Excel (Máy CC)</button>
+            <button class="btn btn-primary" onclick="openModal('modalCC')">+ Nhập Chấm Công</button>
+            <input type="file" id="ccFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleCCImport(event)" />
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table" id="ccTable">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Nhân Viên</th>
+                  <th>Chức Vụ</th>
+                  <th>Phòng Ban</th>
+                  <th>Trạng Thái</th>
+                  <th>Công TT</th>
+                  <th style="color:#f59e0b">🏖️ Ngày Lễ+</th>
+                  <th style="font-weight:700">NCTL</th>
+                  <th>Ngày Nghỉ</th>
+                  <th>NCC</th>
+                  <th style="color:var(--cyan)">⏰ Giờ OT</th>
+                  <th>Ghi Chú</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="ccBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOUR PAGE -->
+      <div id="page-tour" class="page">
+        <div class="page-header">
+          <h1>Tour Dịch Vụ <span class="month-badge" id="tourMonthBadge">T2/2026</span></h1>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-danger" onclick="deleteAllTours()">🗑️ Xóa toàn bộ</button>
+            <label class="btn btn-secondary" style="cursor:pointer">📂 Import Excel
+              <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleTourImport(event)" />
+            </label>
+            <button class="btn btn-primary" onclick="openModal('modalTour')">+ Thêm Tour</button>
+          </div>
+        </div>
+        <!-- Tour Stats -->
+        <div class="stats-grid" id="tourStatsGrid" style="margin-bottom:16px">
+          <div class="stat-card accent-blue">
+            <div class="stat-icon">🗺️</div>
+            <div class="stat-info"><div class="stat-value" id="tourStatCount">0</div><div class="stat-label">Tổng Tour</div></div>
+          </div>
+          <div class="stat-card accent-green">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info"><div class="stat-value" id="tourStatPIC">0đ</div><div class="stat-label">Tổng Tiền PIC</div></div>
+          </div>
+          <div class="stat-card accent-purple">
+            <div class="stat-icon">👨‍⚕️</div>
+            <div class="stat-info"><div class="stat-value" id="tourStatBS">0đ</div><div class="stat-label">Tổng Tiền BS</div></div>
+          </div>
+          <div class="stat-card accent-orange">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info"><div class="stat-value" id="tourStatTotal">0đ</div><div class="stat-label">Tổng Cộng</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="filter-row" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <select id="tourNVFilter" onchange="renderTourTable()">
+                <option value="">-- Tất cả nhân viên --</option>
+              </select>
+              <div id="tourSummaryInline" style="margin-left:auto;display:flex;gap:16px;flex-wrap:wrap"></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="tourTable">
+              <thead>
+                <tr>
+                  <th>Ngày</th>
+                  <th>Khách Hàng</th>
+                  <th>Dịch Vụ</th>
+                  <th>PIC</th>
+                  <th>Bác Sĩ</th>
+                  <th>Tiền PIC</th>
+                  <th>Tiền BS</th>
+                  <th>Ghi Chú</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="tourBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI PAGE -->
+      <div id="page-kpi" class="page">
+        <div class="page-header">
+          <h1>KPI Doanh Số <span class="month-badge" id="kpiMonthBadge">T2/2026</span></h1>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-danger" onclick="deleteAllKPIs()">🗑️ Xóa toàn bộ</button>
+            <label class="btn btn-secondary" style="cursor:pointer">📂 Import Excel
+              <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleKPIImport(event)" />
+            </label>
+            <button class="btn btn-secondary" onclick="toggleKPIRules()">⚙️ Quy Tắc</button>
+            <button class="btn btn-primary" onclick="openModal('modalKPI')">+ Nhập KPI</button>
+          </div>
+        </div>
+        <!-- KPI Rules Panel -->
+        <div id="kpiRulesPanel" class="card" style="display:none;margin-bottom:16px">
+          <div class="card-header"><h3>⚙️ Quy Tắc Hoa Hồng KPI</h3></div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+            <div>
+              <h4 style="color:var(--accent1);margin-bottom:8px">📋 PTV (Tư Vấn)</h4>
+              <div class="form-group"><label>Bậc 1: Dưới (triệu)</label><input type="number" id="rulePTV_t1" value="100" /></div>
+              <div class="form-group"><label>% HH Bậc 1</label><input type="number" id="rulePTV_r1" value="1.5" step="0.1" /></div>
+              <div class="form-group"><label>% HH Bậc 2 (trên ngưỡng)</label><input type="number" id="rulePTV_r2" value="2" step="0.1" /></div>
+            </div>
+            <div>
+              <h4 style="color:var(--accent2);margin-bottom:8px">💆 PDV (Dịch Vụ)</h4>
+              <div class="form-group"><label>Bậc 1: Dưới (triệu)</label><input type="number" id="rulePDV_t1" value="50" /></div>
+              <div class="form-group"><label>% HH Bậc 1</label><input type="number" id="rulePDV_r1" value="1.5" step="0.1" /></div>
+              <div class="form-group"><label>Bậc 2: Dưới (triệu)</label><input type="number" id="rulePDV_t2" value="75" /></div>
+              <div class="form-group"><label>% HH Bậc 2</label><input type="number" id="rulePDV_r2" value="2" step="0.1" /></div>
+              <div class="form-group"><label>% HH Bậc 3 (trên ngưỡng)</label><input type="number" id="rulePDV_r3" value="2.5" step="0.1" /></div>
+            </div>
+            <div>
+              <h4 style="color:var(--accent4);margin-bottom:8px">📞 Tele</h4>
+              <div class="form-group"><label>Ngưỡng khách</label><input type="number" id="ruleTele_t1" value="60" /></div>
+              <div class="form-group"><label>Tiền/khách (dưới ngưỡng)</label><input type="number" id="ruleTele_r1" value="30000" /></div>
+              <div class="form-group"><label>Tiền/khách (trên ngưỡng)</label><input type="number" id="ruleTele_r2" value="40000" /></div>
+            </div>
+          </div>
+          <div style="padding:0 16px 16px;text-align:right">
+            <button class="btn btn-primary" onclick="saveKPIRules()">💾 Lưu Quy Tắc</button>
+          </div>
+        </div>
+        <div class="kpi-tabs">
+          <button class="tab-btn active" onclick="switchKPITab('ptv')">Phòng Tư Vấn (PTV)</button>
+          <button class="tab-btn" onclick="switchKPITab('pdv')">Phòng Dịch Vụ (PDV)</button>
+          <button class="tab-btn" onclick="switchKPITab('tele')">Phòng Tele</button>
+        </div>
+        <div id="kpiTabContent"></div>
+      </div>
+
+      <!-- BẢNG LƯƠNG PAGE -->
+      <div id="page-luong" class="page">
+        <div class="page-header">
+          <h1>Bảng Lương <span class="month-badge" id="luongMonthBadge">T2/2026</span></h1>
+          <div class="header-actions">
+            <label class="btn btn-secondary" style="cursor:pointer" title="Import file lương Excel">
+              📥 Import File Lương
+              <input type="file" accept=".xlsx,.xls" onchange="handleSalaryImport(event)" style="display:none" />
+            </label>
+            <button class="btn btn-secondary" onclick="calcAllSalary()">⚡ Tính Lương</button>
+            <button class="btn btn-primary" onclick="printPage()">🖨️ In Bảng Lương</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table luong-table" id="luongTable">
+              <thead>
+                <tr>
+                  <th rowspan="2">STT</th>
+                  <th rowspan="2">Nhân Viên</th>
+                  <th rowspan="2">Chức Vụ</th>
+                  <th rowspan="2">Trạng Thái</th>
+                  <th colspan="5">LƯƠNG THEO NGÀY CÔNG</th>
+                  <th colspan="2" style="background:rgba(99,102,241,0.08)">LƯƠNG CƠ BẢN</th>
+                  <th colspan="3">HIỆU QUẢ CÔNG VIỆC</th>
+                  <th colspan="2">TĂNG CA</th>
+                  <th colspan="5" style="background:rgba(6,182,212,0.08)">PHỤ CẤP</th>
+                  <th rowspan="2">Thưởng</th>
+                  <th rowspan="2" style="background:rgba(16,185,129,0.1)">Tổng Thu</th>
+                  <th colspan="3" style="background:rgba(239,68,68,0.06)">KHẤU TRỪ</th>
+                  <th rowspan="2" style="background:rgba(16,185,129,0.15)">Thực Lãnh</th>
+                  <th rowspan="2"></th>
+                </tr>
+                <tr>
+                  <th>Giờ Chuẩn</th>
+                  <th>NCC</th>
+                  <th>Công TT</th>
+                  <th>Ngày Lễ+</th>
+                  <th>NCTL</th>
+                  <th>Lương CB</th>
+                  <th>Lương NC</th>
+                  <th>Tour</th>
+                  <th>Doanh Số</th>
+                  <th>Lương KPI</th>
+                  <th>Giờ OT</th>
+                  <th>Tiền OT</th>
+                  <th>Ăn Trưa</th>
+                  <th>Trách Nhiệm</th>
+                  <th>Đi Lại</th>
+                  <th>Hỗ Trợ</th>
+                  <th>Tổng PC</th>
+                  <th>Ký Quỹ</th>
+                  <th>Trừ Khác</th>
+                  <th>Ứng Lương</th>
+                </tr>
+              </thead>
+              <tbody id="luongBody"></tbody>
+              <tfoot id="luongFoot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- KHẤU TRỪ PAGE -->
+      <div id="page-khautru" class="page">
+        <div class="page-header">
+          <h1>📋 Khấu Trừ <span class="month-badge" id="ktMonthBadge">T3/2026</span></h1>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-danger" onclick="deleteAllKT()">🗑️ Xóa toàn bộ</button>
+            <button class="btn btn-primary" onclick="openAddKT()">+ Thêm Khấu Trừ</button>
+          </div>
+        </div>
+        <!-- Stats -->
+        <div class="stats-grid" style="margin-bottom:16px">
+          <div class="stat-card accent-orange">
+            <div class="stat-icon">💸</div>
+            <div class="stat-info"><div class="stat-value" id="ktStatUng">0đ</div><div class="stat-label">Ứng Lương (<span id="ktStatUngCount">0</span> lần)</div></div>
+          </div>
+          <div class="stat-card accent-red">
+            <div class="stat-icon">💳</div>
+            <div class="stat-info"><div class="stat-value" id="ktStatChi">0đ</div><div class="stat-label">Chi Tiền</div></div>
+          </div>
+          <div class="stat-card accent-purple">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-info"><div class="stat-value" id="ktStatPhat">0đ</div><div class="stat-label">Phạt Tiền</div></div>
+          </div>
+          <div class="stat-card accent-blue">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info"><div class="stat-value" id="ktStatTotal">0đ</div><div class="stat-label">Tổng Khấu Trừ</div></div>
+          </div>
+        </div>
+        <!-- Filter + Table -->
+        <div class="card">
+          <div class="card-header">
+            <div class="filter-row">
+              <select id="ktNVFilter" onchange="renderKTPage()">
+                <option value="">-- Tất cả NV --</option>
+              </select>
+              <select id="ktTypeFilter" onchange="renderKTPage()">
+                <option value="">-- Tất cả loại --</option>
+                <option value="ungluong">💸 Ứng Lương</option>
+                <option value="chitien">💳 Chi Tiền</option>
+                <option value="phattien">⚠️ Phạt Tiền</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>STT</th><th>Ngày</th><th>Nhân Viên</th><th>Loại</th>
+                  <th>Số Tiền</th><th>Lần Ứng</th><th>Ghi Chú</th><th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="ktBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHỤ CẤP & THƯỞNG PAGE -->
+      <div id="page-phucap" class="page">
+        <div class="page-header">
+          <h1>🎁 Phụ Cấp & Thưởng <span class="month-badge" id="pcMonthBadge">T3/2026</span></h1>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" onclick="openCopyPhucap()">📋 Copy từ tháng...</button>
+            <button class="btn btn-secondary" onclick="resetPhucapMonth()">🔄 Reset tháng</button>
+            <button class="btn btn-primary" onclick="saveAllPhucap()">💾 Lưu tất cả</button>
+          </div>
+        </div>
+        <!-- Stats -->
+        <div class="stats-grid" style="margin-bottom:16px">
+          <div class="stat-card accent-blue">
+            <div class="stat-icon">🏠</div>
+            <div class="stat-info"><div class="stat-value" id="pcStatTN">0đ</div><div class="stat-label">Tổng PC Trách Nhiệm</div></div>
+          </div>
+          <div class="stat-card accent-orange">
+            <div class="stat-icon">🚗</div>
+            <div class="stat-info"><div class="stat-value" id="pcStatDL">0đ</div><div class="stat-label">Tổng PC Đi Lại</div></div>
+          </div>
+          <div class="stat-card accent-purple">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-info"><div class="stat-value" id="pcStatThuong">0đ</div><div class="stat-label">Tổng Thưởng</div></div>
+          </div>
+          <div class="stat-card" style="border-left:4px solid #ec4899">
+            <div class="stat-icon" style="color:#ec4899">🤝</div>
+            <div class="stat-info"><div class="stat-value" id="pcStatHT">0đ</div><div class="stat-label">Tổng Hỗ Trợ</div></div>
+          </div>
+          <div class="stat-card accent-green">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info"><div class="stat-value" id="pcStatTotal">0đ</div><div class="stat-label">Tổng Cộng</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header" style="padding:12px 16px">
+            <small style="color:var(--text2)">✏️ Nhập trực tiếp vào ô → bấm <strong>💾 Lưu tất cả</strong> để đồng bộ bảng lương</small>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="phucapTable">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Nhân Viên</th>
+                  <th>Chức Vụ</th>
+                  <th>Phòng Ban</th>
+                  <th style="color:#3b82f6">PC Trách Nhiệm (đ/ngày)</th>
+                  <th style="color:#f59e0b">PC Đi Lại (đ)</th>
+                  <th style="color:#ec4899">HT Cố Định (đ)</th>
+                  <th style="color:#e11d48">HT/Ngày (đ/ngày)</th>
+                  <th style="color:#a855f7">Thưởng (đ)</th>
+                  <th style="color:#10b981">Tổng</th>
+                </tr>
+              </thead>
+              <tbody id="phucapBody"></tbody>
+              <tfoot id="phucapFoot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- BÁO CÁO PAGE -->
+      <div id="page-baocao" class="page">
+        <div class="page-header">
+          <h1>Báo Cáo & Biểu Đồ</h1>
+        </div>
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header"><h3>📊 Doanh Số PTV</h3></div>
+            <canvas id="chartPTV" height="250"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>📊 Doanh Số PDV</h3></div>
+            <canvas id="chartPDV" height="250"></canvas>
+          </div>
+        </div>
+        <div class="dashboard-grid mt-20">
+          <div class="card">
+            <div class="card-header"><h3>🗺️ Tour Theo Nhân Viên</h3></div>
+            <canvas id="chartTourNV" height="250"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>💰 Lương Thực Lĩnh</h3></div>
+            <canvas id="chartLuongNV" height="250"></canvas>
+          </div>
+        </div>
+        <div class="card mt-20">
+          <div class="card-header"><h3>📋 Bảng Tổng Hợp Chi Phí</h3></div>
+          <div class="table-wrap">
+            <table class="data-table" id="bcTable">
+              <thead>
+                <tr>
+                  <th>Phòng Ban</th>
+                  <th>Số NV</th>
+                  <th>Tổng Lương CB</th>
+                  <th>Tổng Tour</th>
+                  <th>Tổng KPI</th>
+                  <th>Tổng Phụ Cấp</th>
+                  <th>Tổng Khấu Trừ</th>
+                  <th>Tổng Thực Lĩnh</th>
+                </tr>
+              </thead>
+              <tbody id="bcBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CÀI ĐẶT PAGE -->
+      <div id="page-caidat" class="page">
+        <div class="page-header">
+          <h1>⚙️ Cài Đặt Giờ Làm Việc</h1>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Lịch Làm Việc Theo Phòng Ban</h3></div>
+          <div style="padding:20px">
+            <p style="color:var(--text2);margin-bottom:16px;font-size:13px">
+              Cài đặt giờ làm việc cho từng phòng ban. Khi import chấm công, hệ thống sẽ dùng giờ vào của phòng ban tương ứng để tính trễ.
+            </p>
+            <div id="scheduleCards"></div>
+            <button class="btn btn-primary" style="margin-top:16px" onclick="saveAllSchedules()">💾 Lưu Tất Cả</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- NHẬT KÝ PAGE -->
+      <div id="page-nhatky" class="page">
+        <div class="page-header">
+          <h1>📝 Nhật Ký Hoạt Động</h1>
+          <button class="btn btn-danger" onclick="clearLogs()">🗑️ Xóa Tất Cả</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3>Lịch sử thao tác & lỗi</h3>
+            <div class="filter-row">
+              <select id="logFilter" onchange="renderLogs()">
+                <option value="">Tất cả</option>
+                <option value="error">Lỗi</option>
+                <option value="warning">Cảnh báo</option>
+                <option value="success">Thành công</option>
+                <option value="info">Thông tin</option>
+              </select>
+            </div>
+          </div>
+          <div id="logList" style="max-height:600px;overflow-y:auto;padding:0"></div>
+        </div>
+      </div>
+
+    </div><!-- end page-container -->
+  </main>
+
+  <!-- MODALS -->
+  <!-- Modal Nhân Viên -->
+  <div class="modal-overlay" id="modalNV">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalNVTitle">Thêm Nhân Viên</h2>
+        <button class="modal-close" onclick="closeModal('modalNV')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="nvId" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Mã NV (Máy chấm công) *</label>
+            <input type="text" id="nvMaNV" placeholder="16" />
+          </div>
+          <div class="form-group">
+            <label>Họ và Tên *</label>
+            <input type="text" id="nvHoTen" placeholder="Nguyễn Thị Linh" />
+          </div>
+          <div class="form-group">
+            <label>Chức Vụ</label>
+            <select id="nvChucVu">
+              <option>Bác sĩ</option>
+              <option>KTV</option>
+              <option>Tư vấn viên</option>
+              <option>Telesale</option>
+              <option>Kế toán</option>
+              <option>Lao công</option>
+              <option>Bảo vệ</option>
+              <option>Khác</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Phòng Ban</label>
+            <select id="nvPhongBan">
+              <option value="PTV">Phòng Tư Vấn (PTV)</option>
+              <option value="PDV">Phòng Dịch Vụ (PDV)</option>
+              <option value="Tele">Phòng Tele</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Trạng Thái</label>
+            <select id="nvTrangThai">
+              <option>Chính thức</option>
+              <option>Thử việc</option>
+              <option>Parttime</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Lương Cơ Bản (đ)</label>
+            <input type="number" id="nvLuongCB" placeholder="5000000" />
+          </div>
+          <div class="form-group">
+            <label>Ngày Công Chuẩn</label>
+            <input type="number" id="nvNgayCongChuan" placeholder="26" />
+          </div>
+          <div class="form-group">
+            <label>Giờ Công Chuẩn (h/ngày)</label>
+            <input type="number" id="nvGioCongChuan" placeholder="9" step="0.5" />
+          </div>
+          <div class="form-group">
+            <label>PC Trách Nhiệm (đ/tháng)</label>
+            <input type="number" id="nvPCTrachNhiem" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label>Ký Quỹ (đ/tháng)</label>
+            <input type="number" id="nvKyQuy" placeholder="0" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalNV')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveNV()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Chấm Công -->
+  <div class="modal-overlay" id="modalCC">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Nhập Chấm Công</h2>
+        <button class="modal-close" onclick="closeModal('modalCC')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ccId" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nhân Viên *</label>
+            <select id="ccNV"></select>
+          </div>
+          <div class="form-group">
+            <label>Ngày Công Thực Tế</label>
+            <input type="number" id="ccNgayCongTT" placeholder="20" />
+          </div>
+          <div class="form-group">
+            <label style="color:#f59e0b">🏖️ Ngày Lễ Đi Làm <small style="color:var(--text2)">(+1 ngày vào NCTL)</small></label>
+            <input type="number" id="ccNgayLe" placeholder="0" min="0" style="border-color:#f59e0b" />
+          </div>
+          <div class="form-group">
+            <label>Ngày Nghỉ</label>
+            <input type="number" id="ccNgayNghi" placeholder="3" />
+          </div>
+          <div class="form-group">
+            <label style="color:var(--cyan)">⏰ Giờ Tăng Ca (150%)</label>
+            <input type="number" id="ccGioOT" placeholder="0" step="0.1" style="border-color:var(--cyan)" />
+          </div>
+          <div class="form-group span-2">
+            <label>Ghi Chú</label>
+            <input type="text" id="ccGhiChu" placeholder="Ghi chú về ngày nghỉ, vi phạm..." />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalCC')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveCC()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tour -->
+  <div class="modal-overlay" id="modalTour">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2>Thêm Tour Dịch Vụ</h2>
+        <button class="modal-close" onclick="closeModal('modalTour')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="tourId" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Ngày</label>
+            <input type="date" id="tourNgay" />
+          </div>
+          <div class="form-group">
+            <label>Khách Hàng</label>
+            <input type="text" id="tourKhach" placeholder="Tên khách hàng / mã KH" />
+          </div>
+          <div class="form-group span-2">
+            <label>Dịch Vụ</label>
+            <input type="text" id="tourDichVu" placeholder="Đánh béo, CSD, Laser..." />
+          </div>
+          <div class="form-group">
+            <label>PIC (Tư vấn)</label>
+            <select id="tourPIC"><option value="">-- Chọn --</option></select>
+          </div>
+          <div class="form-group">
+            <label>Tiền Tour PIC (đ)</label>
+            <input type="number" id="tourTienPIC" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label>KTV</label>
+            <select id="tourKTV"><option value="">-- Chọn --</option></select>
+          </div>
+          <div class="form-group">
+            <label>Tiền Tour KTV (đ)</label>
+            <input type="number" id="tourTienKTV" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label>Bác Sĩ</label>
+            <select id="tourBS"><option value="">-- Chọn --</option></select>
+          </div>
+          <div class="form-group">
+            <label>Tiền Tour BS (đ)</label>
+            <input type="number" id="tourTienBS" placeholder="0" />
+          </div>
+          <div class="form-group span-2">
+            <label>Ghi Chú</label>
+            <input type="text" id="tourGhiChu" placeholder="Ghi chú..." />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalTour')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveTour()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal KPI -->
+  <div class="modal-overlay" id="modalKPI">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Nhập KPI Doanh Số</h2>
+        <button class="modal-close" onclick="closeModal('modalKPI')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="kpiId" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nhân Viên *</label>
+            <select id="kpiNV"></select>
+          </div>
+          <div class="form-group">
+            <label>Vai Trò KPI</label>
+            <select id="kpiVaiTro">
+              <option value="TV">Tư Vấn (TV)</option>
+              <option value="HTTV">Hỗ Trợ Tư Vấn (HTTV)</option>
+              <option value="PDV">Phòng Dịch Vụ</option>
+              <option value="Tele">Telesale</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Doanh Số Áp (đ)</label>
+            <input type="number" id="kpiDSAp" placeholder="200000000" />
+          </div>
+          <div class="form-group">
+            <label>Doanh Số Thực (đ)</label>
+            <input type="number" id="kpiDSThuc" placeholder="4898000" />
+          </div>
+          <div class="form-group">
+            <label>% Hoa Hồng</label>
+            <input type="number" id="kpiHoaHong" placeholder="1.5" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label>Phạt (đ)</label>
+            <input type="number" id="kpiPhat" placeholder="0" />
+          </div>
+          <div class="form-group span-2">
+            <label>Ghi Chú</label>
+            <input type="text" id="kpiGhiChu" placeholder="Ghi chú..." />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalKPI')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveKPI()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Import Chấm Công -->
+  <div class="modal-overlay" id="modalImportCC">
+    <div class="modal modal-lg" style="max-width:900px">
+      <div class="modal-header">
+        <h2>📂 Import Chấm Công Từ Máy</h2>
+        <button class="modal-close" onclick="closeModal('modalImportCC')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="import-info" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <div class="stat-card accent-blue" style="flex:1;min-width:140px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="impTotalNV">0</div><div class="stat-label">Nhân viên</div></div>
+          </div>
+          <div class="stat-card accent-green" style="flex:1;min-width:140px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="impTotalRows">0</div><div class="stat-label">Dòng dữ liệu</div></div>
+          </div>
+          <div class="stat-card accent-purple" style="flex:1;min-width:180px;padding:14px">
+            <div class="stat-info">
+              <select id="impMonth" style="font-size:18px;font-weight:700;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;cursor:pointer" onchange="onImpMonthChange()"></select>
+              <div class="stat-label">Tháng (chỉnh nếu sai)</div>
+            </div>
+          </div>
+          <div class="stat-card accent-orange" style="flex:1;min-width:140px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="impWarnings">0</div><div class="stat-label">Cảnh báo</div></div>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="form-group">
+            <label>Phạt trễ (đ/phút) — áp dụng chung</label>
+            <input type="number" id="impPhatPerMin" value="0" placeholder="0 = không phạt" />
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end">
+            <small style="color:var(--text3)">⚙️ Giờ vào chuẩn lấy từ <strong>Cài Đặt Giờ Làm Việc</strong> theo phòng ban</small>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+          <table class="data-table" id="impPreviewTable">
+            <thead>
+              <tr>
+                <th>Tên NV (File)</th>
+                <th>Khớp → NV Hệ Thống</th>
+                <th>Ngày Công</th>
+                <th>Ngày Lễ</th>
+                <th>Ngày Nghỉ</th>
+                <th>Giờ Trễ (phút)</th>
+                <th>Số Lần Trễ</th>
+                <th>Chi Tiết</th>
+              </tr>
+            </thead>
+            <tbody id="impPreviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalImportCC')">Hủy</button>
+        <button class="btn btn-primary" onclick="confirmCCImport()">✅ Xác Nhận Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Import Tour -->
+  <div class="modal-overlay" id="modalImportTour">
+    <div class="modal" style="max-width:900px">
+      <div class="modal-header">
+        <h2>📂 Import Tour Từ Excel</h2>
+        <button class="modal-close" onclick="closeModal('modalImportTour')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="import-info" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <div class="stat-card accent-blue" style="flex:1;min-width:120px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="tourImpTotal">0</div><div class="stat-label">Tour</div></div>
+          </div>
+          <div class="stat-card accent-green" style="flex:1;min-width:120px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="tourImpMatched">0</div><div class="stat-label">NV Khớp</div></div>
+          </div>
+          <div class="stat-card accent-purple" style="flex:1;min-width:160px;padding:14px">
+            <div class="stat-info">
+              <select id="tourImpMonth" style="font-size:18px;font-weight:700;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;cursor:pointer"></select>
+              <div class="stat-label">Tháng</div>
+            </div>
+          </div>
+          <div class="stat-card accent-orange" style="flex:1;min-width:120px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="tourImpWarnings">0</div><div class="stat-label">Cảnh báo</div></div>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ngày</th><th>Khách Hàng</th><th>Dịch Vụ</th>
+                <th>PIC (File)</th><th>Khớp → NV</th>
+                <th>Tiền KTV</th><th>Tiền BS</th><th>Ghi Chú</th>
+              </tr>
+            </thead>
+            <tbody id="tourImpBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalImportTour')">Hủy</button>
+        <button class="btn btn-primary" onclick="confirmTourImport()">✅ Xác Nhận Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Import KPI -->
+  <div class="modal-overlay" id="modalImportKPI">
+    <div class="modal" style="max-width:950px">
+      <div class="modal-header">
+        <h2>📂 Import KPI Từ Excel</h2>
+        <button class="modal-close" onclick="closeModal('modalImportKPI')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="import-info" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <div class="stat-card accent-blue" style="flex:1;min-width:120px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="kpiImpTotal">0</div><div class="stat-label">Nhân viên</div></div>
+          </div>
+          <div class="stat-card accent-green" style="flex:1;min-width:120px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="kpiImpMatched">0</div><div class="stat-label">Khớp NV</div></div>
+          </div>
+          <div class="stat-card accent-purple" style="flex:1;min-width:160px;padding:14px">
+            <div class="stat-info">
+              <select id="kpiImpMonth" style="font-size:18px;font-weight:700;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;cursor:pointer"></select>
+              <div class="stat-label">Tháng</div>
+            </div>
+          </div>
+          <div class="stat-card accent-orange" style="flex:1;min-width:120px;padding:14px">
+            <div class="stat-info"><div class="stat-value" id="kpiImpWarnings">0</div><div class="stat-label">Cảnh báo</div></div>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tên NV (File)</th><th>Phòng Ban</th><th>Khớp → NV</th>
+                <th>DS Áp</th><th>DS Thực</th><th>% HH</th>
+                <th>Phạt</th><th>Tổng Tiền</th><th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="kpiImpBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalImportKPI')">Hủy</button>
+        <button class="btn btn-primary" onclick="confirmKPIImport()">✅ Xác Nhận Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Sửa Toàn Bộ -->
+  <div class="modal-overlay" id="modalBulkEdit">
+    <div class="modal" style="max-width:550px">
+      <div class="modal-header">
+        <h2>✏️ Sửa Toàn Bộ Nhân Viên</h2>
+        <button class="modal-close" onclick="closeModal('modalBulkEdit')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Trường cần sửa</label>
+            <select id="bulkField" onchange="previewBulkEdit()">
+              <option value="luongcb">Lương Cơ Bản</option>
+              <option value="ngaycongchuan">Ngày Công Chuẩn</option>
+              <option value="pcantrua" selected>PC Ăn Trưa (đ/ngày)</option>
+              <option value="pctrachnhiem">PC Trách Nhiệm (đ/tháng)</option>
+              <option value="pcdilai">PC Đi Lại (đ/tháng)</option>
+              <option value="bhxh">BHXH (%)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Áp dụng cho</label>
+            <select id="bulkFilter" onchange="previewBulkEdit()">
+              <option value="">Tất cả NV</option>
+              <option value="PTV">Phòng Tư Vấn</option>
+              <option value="PDV">Phòng Dịch Vụ</option>
+              <option value="Tele">Phòng Tele</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Giá trị mới</label>
+          <input type="number" id="bulkValue" placeholder="Nhập giá trị mới..." oninput="previewBulkEdit()" />
+        </div>
+        <div id="bulkPreview" style="margin-top:12px;padding:12px;background:var(--bg2);border-radius:8px;font-size:13px;max-height:220px;overflow-y:auto"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalBulkEdit')">Hủy</button>
+        <button class="btn btn-primary" onclick="applyBulkEdit()">✅ Áp Dụng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Copy Phụ Cấp -->
+  <div class="modal-overlay" id="modalCopyPhucap">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <h2>📋 Copy Phụ Cấp & Thưởng</h2>
+        <button class="modal-close" onclick="closeModal('modalCopyPhucap')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Copy từ tháng</label>
+          <select id="cpFromMonth"></select>
+        </div>
+        <div class="form-group">
+          <label>Sang tháng (hiện tại)</label>
+          <input type="text" id="cpToMonth" readonly style="background:var(--bg2);color:var(--text2)" />
+        </div>
+        <div class="form-group">
+          <label>Sao chép</label>
+          <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px">
+            <label><input type="checkbox" id="cpPC" checked /> PC Trách Nhiệm, PC Đi Lại, HT Cố Định, HT Ngày</label>
+            <label><input type="checkbox" id="cpThuong" /> Thưởng</label>
+            <label><input type="checkbox" id="cpOverwrite" checked /> Ghi đè nếu đã có dữ liệu tháng đích</label>
+          </div>
+        </div>
+        <div id="cpInfo" style="padding:10px;background:var(--bg2);border-radius:8px;font-size:13px;color:var(--text2);margin-top:8px"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalCopyPhucap')">Hủy</button>
+        <button class="btn btn-primary" onclick="confirmCopyPhucap()">📋 Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Import File Lương -->
+  <div class="modal-overlay" id="modalSalaryImport">
+    <div class="modal" style="max-width:800px">
+      <div class="modal-header">
+        <h2>📥 Import File Lương</h2>
+        <button class="modal-close" onclick="closeModal('modalSalaryImport')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="form-group" style="flex:1">
+            <label>Tháng Import</label>
+            <select id="siMonth"></select>
+          </div>
+          <div class="form-group" style="flex:2">
+            <label>Nhập dữ liệu vào</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:6px">
+              <label><input type="checkbox" id="siCC" checked /> Chấm Công</label>
+              <label><input type="checkbox" id="siPC" checked /> Phụ Cấp</label>
+              <label><input type="checkbox" id="siThuong" checked /> Thưởng</label>
+              <label><input type="checkbox" id="siKPI" checked /> KPI</label>
+              <label><input type="checkbox" id="siKT" checked /> Khấu Trừ</label>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:320px;overflow-y:auto">
+          <table class="data-table" style="font-size:12px">
+            <thead>
+              <tr>
+                <th>Tên (File)</th><th>Nhân Viên</th><th>Ngày TT</th><th>PC Trách Nhiệm</th><th>PC Đi Lại</th><th>Thưởng</th><th>DS/KPI</th><th>Ứng Lương</th>
+              </tr>
+            </thead>
+            <tbody id="siPreviewBody"></tbody>
+          </table>
+        </div>
+        <div id="siLog" style="margin-top:10px;padding:10px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text2);max-height:120px;overflow-y:auto;display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalSalaryImport')">Hủy</button>
+        <button class="btn btn-primary" onclick="confirmSalaryImport()">✅ Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Master Import -->
+  <div class="modal-overlay" id="modalMasterImport">
+    <div class="modal" style="max-width:700px">
+      <div class="modal-header">
+        <h2>📂 Import Tổng Hợp</h2>
+        <button class="modal-close" onclick="closeModal('modalMasterImport')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="stats-grid" style="margin-bottom:16px">
+          <div class="stat-card accent-blue">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-info"><div class="stat-value" id="miKpiCount">0</div><div class="stat-label">KPI Doanh Số</div></div>
+          </div>
+          <div class="stat-card accent-orange">
+            <div class="stat-icon">🗺️</div>
+            <div class="stat-info"><div class="stat-value" id="miTourCount">0</div><div class="stat-label">Tour Dịch Vụ</div></div>
+          </div>
+          <div class="stat-card accent-purple">
+            <div class="stat-icon">📅</div>
+            <div class="stat-info"><div class="stat-value" id="miCcCount">0</div><div class="stat-label">Chấm Công</div></div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group" style="flex:1">
+            <label>Tháng Import</label>
+            <select id="miMonth"></select>
+          </div>
+        </div>
+        <div id="miSheetList" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div id="miLog" style="margin-top:12px;padding:12px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text2);max-height:200px;overflow-y:auto;display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalMasterImport')">Hủy</button>
+        <button class="btn btn-primary" onclick="confirmMasterImport()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">✅ Import Tất Cả</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Khấu Trừ -->
+  <div class="modal-overlay" id="modalKhauTru">
+    <div class="modal" style="max-width:500px">
+      <div class="modal-header">
+        <h2 id="ktModalTitle">💰 Thêm Khấu Trừ</h2>
+        <button class="modal-close" onclick="closeModal('modalKhauTru')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ktId" />
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Nhân Viên</label>
+            <select id="ktNvId"></select>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Loại</label>
+            <select id="ktLoai" onchange="toggleLanUng()">
+              <option value="ungluong">💸 Ứng Lương</option>
+              <option value="chitien">💳 Chi Tiền</option>
+              <option value="phattien">⚠️ Phạt Tiền</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Ngày</label>
+            <input type="date" id="ktNgay" />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Số Tiền (đ)</label>
+            <input type="number" id="ktSoTien" placeholder="0" />
+          </div>
+        </div>
+        <div class="form-group" id="ktLanUngWrap">
+          <label>Lần Ứng (thứ mấy trong tháng)</label>
+          <input type="number" id="ktLanUng" placeholder="1" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Ghi Chú / Lý Do</label>
+          <input type="text" id="ktGhiChu" placeholder="Lý do..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalKhauTru')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveKhauTru()">💾 Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
