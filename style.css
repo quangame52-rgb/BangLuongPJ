@@ -63,10 +63,10 @@ body::before{
     radial-gradient(ellipse 50% 40% at 50% 50%, rgba(14,184,166,0.04) 0%, transparent 60%);
 }
 
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
-::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,0.02)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
 
 /* ===== SIDEBAR ===== */
 .sidebar{
@@ -312,7 +312,27 @@ body::before{
 .mt-20{margin-top:20px}
 
 /* ===== TABLE ===== */
-.table-wrap{overflow-x:auto}
+.table-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  margin-bottom:8px;
+}
+.table-wrap::-webkit-scrollbar{
+  height:12px;
+}
+.table-wrap::-webkit-scrollbar-track{
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:6px;
+}
+.table-wrap::-webkit-scrollbar-thumb{
+  background:rgba(99,102,241,0.55);
+  border:2px solid var(--bg3);
+  border-radius:6px;
+}
+.table-wrap::-webkit-scrollbar-thumb:hover{
+  background:var(--accent);
+}
 
 .data-table{width:100%;border-collapse:collapse;font-size:13px}
 
