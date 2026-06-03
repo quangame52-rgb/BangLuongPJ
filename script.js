@@ -1876,6 +1876,9 @@ const defaultKPIRules = {
 };
 
 function loadKPIRules(){
+  if (DB.settings && DB.settings.kpiRules) {
+    return DB.settings.kpiRules;
+  }
   const saved=localStorage.getItem('spa_kpiRules');
   return saved?JSON.parse(saved):JSON.parse(JSON.stringify(defaultKPIRules));
 }
@@ -1886,6 +1889,9 @@ function saveKPIRules(){
     tele:{t1:+document.getElementById('ruleTele_t1').value,r1:+document.getElementById('ruleTele_r1').value,r2:+document.getElementById('ruleTele_r2').value}
   };
   localStorage.setItem('spa_kpiRules',JSON.stringify(r));
+  if (!DB.settings) DB.settings = {};
+  DB.settings.kpiRules = r;
+  DB.save('settings');
   showToast('Đã lưu quy tắc KPI!');
 }
 function populateKPIRules(){
@@ -3232,17 +3238,22 @@ function loadSyncUrl() {
   if (input) input.value = url;
 }
 
-async function syncCloudUpload() {
+async function syncCloudUpload(isAuto = false) {
   const url = localStorage.getItem('spa2_sync_google_url') || DEFAULT_SYNC_URL;
   if (!url) {
-    showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
+    if (!isAuto) showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
     return;
   }
   
-  const btn = document.getElementById('btnCloudUpload');
-  const oldText = btn.textContent;
-  btn.textContent = '⏳ Đang tải lên...';
-  btn.disabled = true;
+  let btn = null, oldText = '';
+  if (!isAuto) {
+    btn = document.getElementById('btnCloudUpload');
+    if (btn) {
+      oldText = btn.textContent;
+      btn.textContent = '⏳ Đang tải lên...';
+      btn.disabled = true;
+    }
+  }
   
   const backup = {};
   ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
@@ -3252,74 +3263,140 @@ async function syncCloudUpload() {
   try {
     const res = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify(backup)
+      body: JSON.stringify(backup),
+      keepalive: true
     });
     const data = await res.json();
     if (data && data.status === 'success') {
-      showToast('Đã đồng bộ tải dữ liệu lên Google Drive thành công!', 'success');
+      if (!isAuto) showToast('Đã đồng bộ tải dữ liệu lên Google Drive thành công!', 'success');
     } else {
-      showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
+      if (!isAuto) showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
     }
   } catch(err) {
     console.error(err);
-    showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
+    if (!isAuto) showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
   } finally {
-    btn.textContent = oldText;
-    btn.disabled = false;
+    if (!isAuto && btn) {
+      btn.textContent = oldText;
+      btn.disabled = false;
+    }
   }
 }
 
-async function syncCloudDownload() {
+let lastSyncTime = 0;
+async function syncCloudDownload(isAuto = false) {
+  if (isAuto && Date.now() - lastSyncTime < 30000) {
+    return;
+  }
+  lastSyncTime = Date.now();
+
   const url = localStorage.getItem('spa2_sync_google_url') || DEFAULT_SYNC_URL;
   if (!url) {
-    showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
+    if (!isAuto) showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
     return;
   }
   
-  const btn = document.getElementById('btnCloudDownload');
-  const oldText = btn.textContent;
-  btn.textContent = '⏳ Đang tải về...';
-  btn.disabled = true;
+  let btn = null, oldText = '';
+  if (!isAuto) {
+    btn = document.getElementById('btnCloudDownload');
+    if (btn) {
+      oldText = btn.textContent;
+      btn.textContent = '⏳ Đang tải về...';
+      btn.disabled = true;
+    }
+  }
   
   try {
     const res = await fetch(url);
     const data = await res.json();
     
     if (data && data.status === 'empty') {
-      showToast('Thư mục Drive trống hoặc chưa có dữ liệu sao lưu!', 'warning');
+      if (!isAuto) showToast('Thư mục Drive trống hoặc chưa có dữ liệu sao lưu!', 'warning');
       return;
     }
     
     if (!data || !Array.isArray(data.nhanvien)) {
-      showToast('Dữ liệu tải về không hợp lệ!', 'error');
+      if (!isAuto) showToast('Dữ liệu tải về không hợp lệ!', 'error');
       return;
     }
     
-    if (!confirm('Khôi phục dữ liệu từ đám mây sẽ ghi đè toàn bộ dữ liệu hiện tại trên máy này. Bạn có chắc chắn muốn tiếp tục?')) {
-      return;
-    }
-    
-    ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
-      if (data[k] !== undefined) {
-        DB[k] = data[k];
+    if (!isAuto) {
+      if (!confirm('Khôi phục dữ liệu từ đám mây sẽ ghi đè toàn bộ dữ liệu hiện tại trên máy này. Bạn có chắc chắn muốn tiếp tục?')) {
+        return;
       }
-    });
-    DB.saveAll();
+    }
     
-    showToast('Tải dữ liệu từ đám mây thành công! Trang web đang tải lại...', 'success');
-    setTimeout(() => {
-      window.location.reload();
-    }, 1500);
+    // Check if there is any difference to avoid unnecessary UI redraws
+    let hasDifference = false;
+    const keys = ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'];
+    for (const k of keys) {
+      if (data[k] !== undefined) {
+        const localStr = JSON.stringify(DB[k]);
+        const remoteStr = JSON.stringify(data[k]);
+        if (localStr !== remoteStr) {
+          hasDifference = true;
+          DB[k] = data[k];
+        }
+      }
+    }
+    
+    if (hasDifference) {
+      DB.saveAll();
+      showToast(isAuto ? '🔄 Đã tự động cập nhật dữ liệu mới nhất từ đám mây!' : 'Tải dữ liệu từ đám mây thành công! Trang web đang tải lại...', 'success');
+      if (isAuto) {
+        refreshPage();
+      } else {
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+    } else {
+      if (!isAuto) showToast('Dữ liệu trên máy đã là mới nhất!', 'success');
+    }
   } catch(err) {
     console.error(err);
-    showToast('Lỗi: ' + err.message + '. Hãy chắc chắn đã bấm "Tải lên" ở máy gốc trước và cấp quyền cho Script!', 'error');
+    if (!isAuto) {
+      showToast('Lỗi: ' + err.message + '. Hãy chắc chắn đã bấm "Tải lên" ở máy gốc trước và cấp quyền cho Script!', 'error');
+    }
   } finally {
-    btn.textContent = oldText;
-    btn.disabled = false;
+    if (!isAuto && btn) {
+      btn.textContent = oldText;
+      btn.disabled = false;
+    }
   }
 }
+
+// Hook into DB.save/saveAll for automatic upload
+let autoUploadTimeout = null;
+const originalDBSave = DB.save;
+DB.save = function(key) {
+  originalDBSave.call(DB, key);
+  triggerAutoUpload();
+};
+
+const originalDBSaveAll = DB.saveAll;
+DB.saveAll = function() {
+  originalDBSaveAll.call(DB);
+  triggerAutoUpload();
+};
+
+function triggerAutoUpload() {
+  if (autoUploadTimeout) clearTimeout(autoUploadTimeout);
+  autoUploadTimeout = setTimeout(() => {
+    syncCloudUpload(true);
+  }, 2000);
+}
+
+// Auto sync when window gains focus
+window.addEventListener('focus', () => {
+  if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+    return;
+  }
+  syncCloudDownload(true);
+});
 
 // === BOOT ===
 initDefaultSchedules();
 populateSelects();refreshPage();
+syncCloudDownload(true);
 
