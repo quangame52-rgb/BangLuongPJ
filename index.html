@@ -80,10 +80,10 @@
       <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
       <div class="topbar-actions">
-        <button class="btn btn-accent" onclick="document.getElementById('masterImportFile').click()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">📂 Import Tổng Hợp</button>
+        <button class="btn btn-accent" onclick="document.getElementById('masterImportFile').click()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">📂 <span class="btn-text">Import Tổng Hợp</span></button>
         <input type="file" id="masterImportFile" accept=".xlsx,.xls" style="display:none" onchange="handleMasterImport(event)" />
-        <button class="btn btn-primary" onclick="exportData()">⬇ Xuất Excel</button>
-        <button class="btn btn-ghost" onclick="printPage()">🖨️ In</button>
+        <button class="btn btn-primary" onclick="exportData()">⬇ <span class="btn-text">Xuất Excel</span></button>
+        <button class="btn btn-ghost" onclick="printPage()">🖨️ <span class="btn-text">In</span></button>
       </div>
     </header>
 
