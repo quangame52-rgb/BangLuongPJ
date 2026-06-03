@@ -3312,7 +3312,7 @@ async function syncCloudDownload() {
     }, 1500);
   } catch(err) {
     console.error(err);
-    showToast('Lỗi tải dữ liệu từ Google Drive! Kiểm tra lại URL.', 'error');
+    showToast('Lỗi: ' + err.message + '. Hãy chắc chắn đã bấm "Tải lên" ở máy gốc trước và cấp quyền cho Script!', 'error');
   } finally {
     btn.textContent = oldText;
     btn.disabled = false;
