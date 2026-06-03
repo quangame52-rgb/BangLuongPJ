@@ -3218,7 +3218,7 @@ function restoreDatabase(event) {
 }
 
 // === GOOGLE DRIVE SYNC ===
-const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzRiBdMPZPLJiT9R9JCgRDOUdmHVwPRQmU1rRx3o_P6GIAALDR7w_C36KGgksBz5_-fOA/exec';
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyyAzr4KlNzzKv5H-iZZwS0BZqHG23merVchTD6ScU-8PAh6W5Yl4iwEu0OohTBveHy-w/exec';
 
 function saveSyncUrl() {
   const url = document.getElementById('syncGoogleUrl').value.trim();
