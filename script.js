@@ -3284,16 +3284,11 @@ async function syncCloudUpload(isAuto = false) {
     const res = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(backup),
+      mode: 'no-cors',
       keepalive: true
     });
-    const data = await res.json();
-    if (data && data.status === 'success') {
-      updateSyncStatus('success', 'Đã đồng bộ');
-      if (!isAuto) showToast('Đã đồng bộ tải dữ liệu lên Google Drive thành công!', 'success');
-    } else {
-      updateSyncStatus('success', 'Đã đồng bộ');
-      if (!isAuto) showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
-    }
+    updateSyncStatus('success', 'Đã đồng bộ');
+    if (!isAuto) showToast('Đã đồng bộ tải dữ liệu lên Google Drive thành công!', 'success');
   } catch(err) {
     console.error(err);
     updateSyncStatus('error', 'Lỗi đồng bộ');
