@@ -3346,11 +3346,26 @@ async function syncCloudDownload(isAuto = false) {
       if (!isAuto) showToast('Dữ liệu tải về không hợp lệ!', 'error');
       return;
     }
+
+    const remoteTime = (data.settings && data.settings.lastUpdated) ? data.settings.lastUpdated : 0;
+    const localTime = (DB.settings && DB.settings.lastUpdated) ? DB.settings.lastUpdated : 0;
     
-    if (!isAuto) {
-      if (!confirm('Khôi phục dữ liệu từ đám mây sẽ ghi đè toàn bộ dữ liệu hiện tại trên máy này. Bạn có chắc chắn muốn tiếp tục?')) {
+    if (isAuto) {
+      if (remoteTime <= localTime && DB.nhanvien.length > 0) {
         updateSyncStatus('success', 'Đã đồng bộ');
-        return;
+        return; // Skip auto sync if local data is newer or identical
+      }
+    } else {
+      if (remoteTime <= localTime && DB.nhanvien.length > 0) {
+        if (!confirm('Dữ liệu trên đám mây (' + new Date(remoteTime).toLocaleString('vi-VN') + ') cũ hơn hoặc trùng khớp với dữ liệu hiện tại trên máy này (' + new Date(localTime).toLocaleString('vi-VN') + '). Bạn có chắc chắn vẫn muốn tải về và ghi đè?')) {
+          updateSyncStatus('success', 'Đã đồng bộ');
+          return;
+        }
+      } else {
+        if (!confirm('Khôi phục dữ liệu từ đám mây sẽ ghi đè toàn bộ dữ liệu hiện tại trên máy này. Bạn có chắc chắn muốn tiếp tục?')) {
+          updateSyncStatus('success', 'Đã đồng bộ');
+          return;
+        }
       }
     }
     
@@ -3396,16 +3411,23 @@ async function syncCloudDownload(isAuto = false) {
   }
 }
 
-// Hook into DB.save/saveAll for automatic upload
+// Hook into DB.save/saveAll for automatic upload and timestamp update
 let autoUploadTimeout = null;
 const originalDBSave = DB.save;
 DB.save = function(key) {
+  if (key !== 'settings') {
+    if (!DB.settings) DB.settings = {};
+    DB.settings.lastUpdated = Date.now();
+    originalDBSave.call(DB, 'settings');
+  }
   originalDBSave.call(DB, key);
   triggerAutoUpload();
 };
 
 const originalDBSaveAll = DB.saveAll;
 DB.saveAll = function() {
+  if (!DB.settings) DB.settings = {};
+  DB.settings.lastUpdated = Date.now();
   originalDBSaveAll.call(DB);
   triggerAutoUpload();
 };
