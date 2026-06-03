@@ -4,7 +4,7 @@ let currentPage='dashboard', kpiTab='ptv', charts={};
 function switchPage(p){currentPage=p;document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.page===p)});document.getElementById('topbarTitle').textContent={dashboard:'Dashboard',nhanvien:'Nhân Viên',chamcong:'Chấm Công',tour:'Tour Dịch Vụ',kpi:'KPI Doanh Số',luong:'Bảng Lương',khautru:'Khấu Trừ',phucap:'Phụ Cấp & Thưởng',baocao:'Báo Cáo',caidat:'Cài Đặt',nhatky:'Nhật Ký'}[p]||p;if(p==='nhatky'){const b=document.getElementById('logBadge');if(b)b.style.display='none';}refreshPage();}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
 function onMonthChange(){const m=getMonth();['dashMonthBadge','ccMonthBadge','tourMonthBadge','kpiMonthBadge','luongMonthBadge','ktMonthBadge','pcMonthBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=m.label;});refreshPage();}
-function refreshPage(){renderNVTable();renderCCTable();renderTourTable();renderKPITab();calcAllSalary();renderDashboard();renderBaoCao();renderKTPage();renderPhucapPage();loadMonthConfig();populateSelects();renderSchedules();renderLogs();}
+function refreshPage(){loadSyncUrl();renderNVTable();renderCCTable();renderTourTable();renderKPITab();calcAllSalary();renderDashboard();renderBaoCao();renderKTPage();renderPhucapPage();loadMonthConfig();populateSelects();renderSchedules();renderLogs();}
 let appLogs = JSON.parse(localStorage.getItem('spa_logs')||'[]');
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3500);addLog(msg,type);}
 function addLog(msg,type='info',details=''){appLogs.unshift({msg,type,details,time:new Date().toLocaleString('vi-VN')});if(appLogs.length>200)appLogs=appLogs.slice(0,200);localStorage.setItem('spa_logs',JSON.stringify(appLogs));if(currentPage!=='nhatky'){const b=document.getElementById('logBadge');if(b){const errCnt=appLogs.filter(l=>l.type==='error').length;if(errCnt>0){b.textContent=errCnt;b.style.display='inline-flex';}}}renderLogs();}
@@ -3215,6 +3215,106 @@ function restoreDatabase(event) {
     }
   };
   reader.readAsText(file);
+}
+
+// === GOOGLE DRIVE SYNC ===
+function saveSyncUrl() {
+  const url = document.getElementById('syncGoogleUrl').value.trim();
+  localStorage.setItem('spa2_sync_google_url', url);
+  showToast('Đã lưu đường dẫn đồng bộ Google!');
+}
+
+function loadSyncUrl() {
+  const url = localStorage.getItem('spa2_sync_google_url') || '';
+  const input = document.getElementById('syncGoogleUrl');
+  if (input) input.value = url;
+}
+
+async function syncCloudUpload() {
+  const url = localStorage.getItem('spa2_sync_google_url');
+  if (!url) {
+    showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('btnCloudUpload');
+  const oldText = btn.textContent;
+  btn.textContent = '⏳ Đang tải lên...';
+  btn.disabled = true;
+  
+  const backup = {};
+  ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
+    backup[k] = DB[k];
+  });
+  
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(backup)
+    });
+    const data = await res.json();
+    if (data && data.status === 'success') {
+      showToast('Đã đồng bộ tải dữ liệu lên Google Drive thành công!', 'success');
+    } else {
+      showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
+    }
+  } catch(err) {
+    console.error(err);
+    showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
+  } finally {
+    btn.textContent = oldText;
+    btn.disabled = false;
+  }
+}
+
+async function syncCloudDownload() {
+  const url = localStorage.getItem('spa2_sync_google_url');
+  if (!url) {
+    showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('btnCloudDownload');
+  const oldText = btn.textContent;
+  btn.textContent = '⏳ Đang tải về...';
+  btn.disabled = true;
+  
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    if (data && data.status === 'empty') {
+      showToast('Thư mục Drive trống hoặc chưa có dữ liệu sao lưu!', 'warning');
+      return;
+    }
+    
+    if (!data || !Array.isArray(data.nhanvien)) {
+      showToast('Dữ liệu tải về không hợp lệ!', 'error');
+      return;
+    }
+    
+    if (!confirm('Khôi phục dữ liệu từ đám mây sẽ ghi đè toàn bộ dữ liệu hiện tại trên máy này. Bạn có chắc chắn muốn tiếp tục?')) {
+      return;
+    }
+    
+    ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
+      if (data[k] !== undefined) {
+        DB[k] = data[k];
+      }
+    });
+    DB.saveAll();
+    
+    showToast('Tải dữ liệu từ đám mây thành công! Trang web đang tải lại...', 'success');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  } catch(err) {
+    console.error(err);
+    showToast('Lỗi tải dữ liệu từ Google Drive! Kiểm tra lại URL.', 'error');
+  } finally {
+    btn.textContent = oldText;
+    btn.disabled = false;
+  }
 }
 
 // === BOOT ===

@@ -585,14 +585,32 @@
         </div>
         
         <div class="card mt-20">
-          <div class="card-header"><h3>💾 Sao Lưu & Khôi Phục Dữ Liệu</h3></div>
+          <div class="card-header"><h3>💾 Sao Lưu & Đồng Bộ Dữ Liệu</h3></div>
           <div style="padding:20px">
             <p style="color:var(--text2);margin-bottom:16px;font-size:13px">
               Vì lý do bảo mật dữ liệu tuyệt đối, phần mềm lưu toàn bộ thông tin cục bộ trên trình duyệt máy tính của bạn (không gửi lên máy chủ). 
-              Khi cần làm việc trên máy tính khác, hãy xuất file sao lưu từ máy này và nhập vào máy kia.
+              Để đồng bộ giữa các máy tính hoặc sao lưu trực tuyến, hãy chọn một trong hai cách dưới đây:
             </p>
+            
+            <h4 style="color:var(--accent2);margin-bottom:6px;font-size:13.5px">Cách 1: Đồng bộ đám mây qua Google Drive cá nhân (Khuyên dùng)</h4>
+            <p style="color:var(--text3);margin-bottom:12px;font-size:12px">
+              Lưu dữ liệu trực tuyến dưới dạng file ẩn <code>spapayroll_db.json</code> trên chính tài khoản Google Drive của bạn. Chỉ cần dán đường dẫn Web App URL vào các máy tính là có thể tải lên/tải về dữ liệu trực tiếp.
+            </p>
+            <div class="form-group" style="margin-bottom:14px">
+              <label>Đường dẫn Google Apps Script Web App URL</label>
+              <input type="text" id="syncGoogleUrl" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%" onchange="saveSyncUrl()" />
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">
+              <button class="btn btn-primary" id="btnCloudUpload" onclick="syncCloudUpload()">📤 Tải dữ liệu lên Drive</button>
+              <button class="btn btn-secondary" id="btnCloudDownload" onclick="syncCloudDownload()">📥 Tải dữ liệu từ Drive về máy</button>
+              <button class="btn btn-ghost" onclick="openModal('modalGoogleGuide')">❓ Hướng dẫn cài đặt (2 phút)</button>
+            </div>
+            
+            <div style="height:1px;background:var(--border);margin:20px 0"></div>
+            
+            <h4 style="color:var(--text);margin-bottom:8px;font-size:13.5px">Cách 2: Sao lưu & Khôi phục thủ công bằng file tải về máy</h4>
             <div style="display:flex;gap:12px;flex-wrap:wrap">
-              <button class="btn btn-primary" onclick="backupDatabase()">📤 Xuất File Sao Lưu (.json)</button>
+              <button class="btn btn-secondary" onclick="backupDatabase()">📤 Xuất File Sao Lưu (.json)</button>
               <label class="btn btn-secondary" style="cursor:pointer">
                 📥 Nhập File Sao Lưu (.json)
                 <input type="file" accept=".json" style="display:none" onchange="restoreDatabase(event)" />
@@ -1212,6 +1230,79 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modalKhauTru')">Hủy</button>
         <button class="btn btn-primary" onclick="saveKhauTru()">💾 Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Hướng Dẫn Google Sync -->
+  <div class="modal-overlay" id="modalGoogleGuide">
+    <div class="modal" style="max-width:650px">
+      <div class="modal-header">
+        <h2>🛠️ Hướng Dẫn Cài Đặt Đồng Bộ Google Drive</h2>
+        <button class="modal-close" onclick="closeModal('modalGoogleGuide')">✕</button>
+      </div>
+      <div class="modal-body" style="font-size:13px;line-height:1.6;color:var(--text2)">
+        <p style="color:var(--text);margin-bottom:12px;font-weight:600">Làm theo 5 bước cực kỳ đơn giản sau để đồng bộ trực tiếp lên tài khoản Google Drive của bạn:</p>
+        
+        <ol style="margin-left:20px;display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+          <li>Truy cập vào <strong><a href="https://script.google.com" target="_blank" style="color:var(--accent2)">Google Apps Script (script.google.com)</a></strong> và đăng nhập bằng tài khoản Google của bạn.</li>
+          <li>Nhấn vào nút <strong>Dự án mới (New Project)</strong>.</li>
+          <li>Xóa toàn bộ mã mặc định có sẵn, copy và dán đoạn mã Script dưới đây vào:
+            <textarea readonly style="width:100%;height:150px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-family:monospace;margin-top:6px;font-size:11px" onclick="this.select()">function doPost(e) {
+  try {
+    var contents = e.postData.contents;
+    var files = DriveApp.getFilesByName("spapayroll_db.json");
+    var file;
+    if (files.hasNext()) {
+      file = files.next();
+      file.setContent(contents);
+    } else {
+      file = DriveApp.createFile("spapayroll_db.json", contents, "application/json");
+    }
+    return ContentService.createTextOutput(JSON.stringify({status: "success"}))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*');
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({status: "error", message: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*');
+  }
+}
+
+function doGet(e) {
+  try {
+    var files = DriveApp.getFilesByName("spapayroll_db.json");
+    if (files.hasNext()) {
+      var file = files.next();
+      var val = file.getAs("application/json").getDataAsString();
+      return ContentService.createTextOutput(val)
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeader('Access-Control-Allow-Origin', '*');
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({status: "empty"}))
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeader('Access-Control-Allow-Origin', '*');
+    }
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({status: "error", message: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*');
+  }
+}</textarea>
+          </li>
+          <li>Nhấn vào nút <strong>Triển khai (Deploy)</strong> ở góc trên bên phải -> Chọn <strong>Tùy chọn triển khai mới (New deployment)</strong>:
+            <ul style="margin-left:20px;margin-top:4px;list-style-type:circle">
+              <li>Nhấp vào biểu tượng bánh răng bên cạnh "Select type" và chọn <strong>Ứng dụng web (Web app)</strong>.</li>
+              <li>Mục "Execute as" (Khởi chạy dưới dạng): Chọn <strong>Tôi (Me - email của bạn)</strong>.</li>
+              <li>Mục "Who has access" (Ai có quyền truy cập): Chọn <strong>Bất kỳ ai (Anyone)</strong>.</li>
+            </ul>
+          </li>
+          <li>Nhấn nút <strong>Triển khai (Deploy)</strong> -> Cấp quyền truy cập nếu Google yêu cầu -> Sau đó sao chép (Copy) đoạn link <strong>URL của ứng dụng web</strong> ở cuối (có đuôi `/exec`) dán vào ô cài đặt trong phần mềm.</li>
+        </ol>
+        <p style="color:var(--accent2);font-weight:600">💡 Lưu ý: Khi đồng bộ, dữ liệu được tải lên/tải về file "spapayroll_db.json" bảo mật nằm trực tiếp trên Drive cá nhân của bạn, không ai khác có thể truy cập trừ khi có đường link Script trên.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="closeModal('modalGoogleGuide')">Đã Hiểu</button>
       </div>
     </div>
   </div>
