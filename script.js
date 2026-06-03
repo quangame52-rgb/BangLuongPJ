@@ -3254,6 +3254,7 @@ function updateSyncStatus(status, text) {
   
   if (iconEl) iconEl.textContent = icons[status] || '🔄';
   if (textEl) textEl.textContent = text;
+  if (status === 'success') el.title = 'Nhấp để đồng bộ lại dữ liệu';
 }
 
 async function syncCloudUpload(isAuto = false) {
@@ -3288,10 +3289,14 @@ async function syncCloudUpload(isAuto = false) {
       keepalive: true
     });
     updateSyncStatus('success', 'Đã đồng bộ');
+    const el = document.getElementById('syncStatus');
+    if (el) el.title = 'Nhấp để đồng bộ lại dữ liệu';
     if (!isAuto) showToast('Đã đồng bộ tải dữ liệu lên Google Drive thành công!', 'success');
   } catch(err) {
     console.error(err);
     updateSyncStatus('error', 'Lỗi đồng bộ');
+    const el = document.getElementById('syncStatus');
+    if (el) el.title = 'Lỗi tải lên: ' + err.message + ' (Nhấp để đồng bộ lại)';
     if (!isAuto) showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
   } finally {
     if (!isAuto && btn) {
@@ -3395,6 +3400,8 @@ async function syncCloudDownload(isAuto = false) {
   } catch(err) {
     console.error(err);
     updateSyncStatus('error', 'Lỗi đồng bộ');
+    const el = document.getElementById('syncStatus');
+    if (el) el.title = 'Lỗi tải về: ' + err.message + ' (Nhấp để đồng bộ lại)';
     if (!isAuto) {
       showToast('Lỗi: ' + err.message + '. Hãy chắc chắn đã bấm "Tải lên" ở máy gốc trước và cấp quyền cho Script!', 'error');
     }
