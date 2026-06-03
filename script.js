@@ -431,11 +431,360 @@ function editKhauTru(nvId){
 
 // === DASHBOARD ===
 function renderDashboard(){document.getElementById('statNV').textContent=DB.nhanvien.length;const mk=getMonth().key;const sals=DB.salaries.filter(s=>s.monthKey===mk);const totalLuong=sals.reduce((s,x)=>s+x.thuclinh,0);const totalDS=DB.kpis.filter(k=>k.monthKey===mk).reduce((s,k)=>s+k.dsthuc,0);const totalTour=DB.tours.filter(t=>t.monthKey===mk).reduce((s,t)=>s+t.tienPIC+t.tienKTV+t.tienBS,0);document.getElementById('statTongLuong').textContent=fmtShort(totalLuong);document.getElementById('statDoanhSo').textContent=fmtShort(totalDS);document.getElementById('statTour').textContent=fmtShort(totalTour);const sumBody=document.getElementById('dashSummaryBody');if(sumBody)sumBody.innerHTML=sals.map(s=>{const nv=getNV(s.nvId);if(!nv)return '';return `<tr><td><strong>${nv.name}</strong></td><td>${nv.chucvu}</td><td>${pbLabel(nv.phongban)}</td><td>${s.nctt}/${s.ncc}</td><td class="amount">${fmt(s.tour)}</td><td class="amount-blue">${fmt((s.luongKPI||0))}</td><td class="amount" style="font-weight:700">${fmt(s.thuclinh)}</td></tr>`;}).join('');renderCharts();}
-function renderCharts(){const mk=getMonth().key;const sals=DB.salaries.filter(s=>s.monthKey===mk);const pbs={};sals.forEach(s=>{const nv=getNV(s.nvId);if(!nv)return;const pb=nv.phongban;pbs[pb]=(pbs[pb]||0)+s.thuclinh;});destroyChart('chartLuongPhong');const ctx1=document.getElementById('chartLuongPhong');if(ctx1)charts.chartLuongPhong=new Chart(ctx1,{type:'doughnut',data:{labels:Object.keys(pbs).map(pbLabel),datasets:[{data:Object.values(pbs),backgroundColor:['#6c63ff','#10b981','#f59e0b','#ec4899'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#9aa3bb',font:{size:12}}}},cutout:'60%'}});const top5=sals.sort((a,b)=>b.thuclinh-a.thuclinh).slice(0,5);destroyChart('chartTopDS');const ctx2=document.getElementById('chartTopDS');if(ctx2)charts.chartTopDS=new Chart(ctx2,{type:'bar',data:{labels:top5.map(s=>getNVName(s.nvId)),datasets:[{label:'Thực Lĩnh',data:top5.map(s=>s.thuclinh),backgroundColor:'rgba(108,99,255,0.6)',borderColor:'#6c63ff',borderWidth:1,borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7591',callback:v=>fmtShort(v)},grid:{color:'rgba(45,52,70,0.5)'}},y:{ticks:{color:'#e8ecf5'},grid:{display:false}}}}});}
+const chartDataLabelsPlugin = {
+  id: 'chartDataLabelsPlugin',
+  afterDatasetsDraw(chart, args, options) {
+    const {ctx} = chart;
+    ctx.save();
+    ctx.font = '600 10.5px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    chart.data.datasets.forEach((dataset, i) => {
+      const meta = chart.getDatasetMeta(i);
+      meta.data.forEach((element, index) => {
+        const val = dataset.data[index];
+        if (val === undefined || val === null || val === 0) return;
+        const label = fmtShort(val);
+        const position = element.tooltipPosition();
+        if (chart.config.type === 'doughnut') {
+          ctx.fillStyle = '#ffffff';
+          ctx.textBaseline = 'middle';
+          const angle = element.endAngle - element.startAngle;
+          if (angle > 0.15) {
+            ctx.fillText(label, position.x, position.y);
+          }
+        } else if (chart.config.type === 'bar') {
+          ctx.fillStyle = '#eaf0ff';
+          if (chart.options.indexAxis === 'y') {
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, position.x + 6, position.y);
+          } else {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(label, position.x, position.y - 5);
+          }
+        }
+      });
+    });
+    ctx.restore();
+  }
+};
+
+function renderCharts(){
+  const mk=getMonth().key;
+  const sals=DB.salaries.filter(s=>s.monthKey===mk);
+  const pbs={};
+  sals.forEach(s=>{
+    const nv=getNV(s.nvId);
+    if(!nv)return;
+    const pb=nv.phongban;
+    pbs[pb]=(pbs[pb]||0)+s.thuclinh;
+  });
+  
+  destroyChart('chartLuongPhong');
+  const ctx1=document.getElementById('chartLuongPhong');
+  if(ctx1){
+    const colors = Object.keys(pbs).map(pb => {
+      return { PTV: '#6366f1', PDV: '#14b8a6', Tele: '#f59e0b', 'Khác': '#ec4899' }[pb] || '#8b5cf6';
+    });
+    charts.chartLuongPhong=new Chart(ctx1,{
+      type:'doughnut',
+      plugins: [chartDataLabelsPlugin],
+      data:{
+        labels:Object.keys(pbs).map(pbLabel),
+        datasets:[{
+          data:Object.values(pbs),
+          backgroundColor:colors,
+          borderWidth:0
+        }]
+      },
+      options:{
+        plugins:{
+          legend:{
+            position:'bottom',
+            labels:{color:'#9aa3bb',font:{size:12,family:'Inter'}}
+          },
+          tooltip:{
+            backgroundColor:'rgba(22, 26, 34, 0.95)',
+            titleColor:'#eaf0ff',
+            bodyColor:'#eaf0ff',
+            borderColor:'rgba(99, 102, 241, 0.3)',
+            borderWidth:1,
+            cornerRadius:8
+          }
+        },
+        cutout:'60%'
+      }
+    });
+  }
+
+  const top5=sals.sort((a,b)=>b.thuclinh-a.thuclinh).slice(0,5);
+  destroyChart('chartTopDS');
+  const ctx2=document.getElementById('chartTopDS');
+  if(ctx2){
+    charts.chartTopDS=new Chart(ctx2,{
+      type:'bar',
+      plugins: [chartDataLabelsPlugin],
+      data:{
+        labels:top5.map(s=>getNVName(s.nvId)),
+        datasets:[{
+          label:'Thực Lĩnh',
+          data:top5.map(s=>s.thuclinh),
+          backgroundColor:'rgba(99, 102, 241, 0.75)',
+          borderColor:'#6366f1',
+          borderWidth:1.5,
+          borderRadius:6
+        }]
+      },
+      options:{
+        indexAxis:'y',
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'rgba(22, 26, 34, 0.95)',
+            titleColor:'#eaf0ff',
+            bodyColor:'#eaf0ff',
+            borderColor:'rgba(99, 102, 241, 0.3)',
+            borderWidth:1,
+            cornerRadius:8
+          }
+        },
+        scales:{
+          x:{
+            grace: '12%',
+            ticks:{color:'#8b95b0',font:{family:'Inter'},callback:v=>fmtShort(v)},
+            grid:{color:'rgba(45,52,70,0.3)'}
+          },
+          y:{
+            ticks:{color:'#eaf0ff',font:{family:'Inter'}},
+            grid:{display:false}
+          }
+        }
+      }
+    });
+  }
+}
+
 function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 
 // === BAO CAO ===
-function renderBaoCao(){const mk=getMonth().key;const sals=DB.salaries.filter(s=>s.monthKey===mk);const kpis=DB.kpis.filter(k=>k.monthKey===mk);const ptvKpis=kpis.filter(k=>k.vaitro==='TV');const pdvKpis=kpis.filter(k=>k.vaitro==='PDV');destroyChart('chartPTV');const c1=document.getElementById('chartPTV');if(c1&&ptvKpis.length)charts.chartPTV=new Chart(c1,{type:'bar',data:{labels:ptvKpis.map(k=>getNVName(k.nvId)),datasets:[{label:'DS Thực',data:ptvKpis.map(k=>k.dsthuc),backgroundColor:'rgba(108,99,255,0.7)',borderRadius:6},{label:'DS Áp',data:ptvKpis.map(k=>k.dsap),backgroundColor:'rgba(168,85,247,0.3)',borderRadius:6}]},options:{plugins:{legend:{labels:{color:'#9aa3bb'}}},scales:{x:{ticks:{color:'#6b7591'},grid:{display:false}},y:{ticks:{color:'#6b7591',callback:v=>fmtShort(v)},grid:{color:'rgba(45,52,70,0.5)'}}}}});destroyChart('chartPDV');const c2=document.getElementById('chartPDV');if(c2&&pdvKpis.length)charts.chartPDV=new Chart(c2,{type:'bar',data:{labels:pdvKpis.map(k=>getNVName(k.nvId)),datasets:[{label:'DS Thực',data:pdvKpis.map(k=>k.dsthuc),backgroundColor:'rgba(16,185,129,0.7)',borderRadius:6},{label:'DS Áp',data:pdvKpis.map(k=>k.dsap),backgroundColor:'rgba(16,185,129,0.3)',borderRadius:6}]},options:{plugins:{legend:{labels:{color:'#9aa3bb'}}},scales:{x:{ticks:{color:'#6b7591'},grid:{display:false}},y:{ticks:{color:'#6b7591',callback:v=>fmtShort(v)},grid:{color:'rgba(45,52,70,0.5)'}}}}});const tourSums={};DB.tours.filter(t=>t.monthKey===mk).forEach(t=>{[{id:t.pic,a:t.tienPIC},{id:t.ktv,a:t.tienKTV},{id:t.bs,a:t.tienBS}].forEach(x=>{if(x.id)tourSums[x.id]=(tourSums[x.id]||0)+x.a;});});destroyChart('chartTourNV');const c3=document.getElementById('chartTourNV');if(c3)charts.chartTourNV=new Chart(c3,{type:'bar',data:{labels:Object.keys(tourSums).map(getNVName),datasets:[{label:'Tổng Tour',data:Object.values(tourSums),backgroundColor:'rgba(245,158,11,0.7)',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7591'},grid:{display:false}},y:{ticks:{color:'#6b7591',callback:v=>fmtShort(v)},grid:{color:'rgba(45,52,70,0.5)'}}}}});destroyChart('chartLuongNV');const c4=document.getElementById('chartLuongNV');if(c4&&sals.length)charts.chartLuongNV=new Chart(c4,{type:'bar',data:{labels:sals.map(s=>getNVName(s.nvId)),datasets:[{label:'Thực Lĩnh',data:sals.map(s=>s.thuclinh),backgroundColor:sals.map((_,i)=>`hsla(${i*35+200},70%,60%,0.7)`),borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7591',maxRotation:45},grid:{display:false}},y:{ticks:{color:'#6b7591',callback:v=>fmtShort(v)},grid:{color:'rgba(45,52,70,0.5)'}}}}});const bcBody=document.getElementById('bcBody');if(bcBody){const depts={};sals.forEach(s=>{const nv=getNV(s.nvId);if(!nv)return;const pb=nv.phongban;if(!depts[pb])depts[pb]={count:0,lcb:0,tour:0,kpi:0,pcan:0,khautru:0,thuclinh:0};depts[pb].count++;depts[pb].lcb+=s.luongTinh;depts[pb].tour+=s.tour;depts[pb].kpi+=(s.luongKPI||0);depts[pb].pcan+=s.pcan;depts[pb].khautru+=(s.kyquy||0)+(s.phattle||0);depts[pb].thuclinh+=s.thuclinh;});bcBody.innerHTML=Object.entries(depts).map(([pb,d])=>`<tr><td><strong>${pbLabel(pb)}</strong></td><td>${d.count}</td><td class="amount">${fmt(d.lcb)}</td><td class="amount">${fmt(d.tour)}</td><td class="amount-blue">${fmt(d.kpi)}</td><td>${fmt(d.pcan)}</td><td class="amount-red">${fmt(d.khautru)}</td><td class="amount" style="font-weight:700">${fmt(d.thuclinh)}</td></tr>`).join('');}}
+function renderBaoCao(){
+  const mk=getMonth().key;
+  const sals=DB.salaries.filter(s=>s.monthKey===mk);
+  const kpis=DB.kpis.filter(k=>k.monthKey===mk);
+  const ptvKpis=kpis.filter(k=>k.vaitro==='TV');
+  const pdvKpis=kpis.filter(k=>k.vaitro==='PDV');
+
+  destroyChart('chartPTV');
+  const c1=document.getElementById('chartPTV');
+  if(c1&&ptvKpis.length) {
+    charts.chartPTV=new Chart(c1,{
+      type:'bar',
+      plugins: [chartDataLabelsPlugin],
+      data:{
+        labels:ptvKpis.map(k=>getNVName(k.nvId)),
+        datasets:[
+          {
+            label:'DS Thực',
+            data:ptvKpis.map(k=>k.dsthuc),
+            backgroundColor:'rgba(99, 102, 241, 0.85)',
+            borderColor:'#6366f1',
+            borderWidth:1,
+            borderRadius:6
+          },
+          {
+            label:'DS Áp',
+            data:ptvKpis.map(k=>k.dsap),
+            backgroundColor:'rgba(168, 85, 247, 0.25)',
+            borderColor:'rgba(168, 85, 247, 0.7)',
+            borderWidth:1,
+            borderRadius:6
+          }
+        ]
+      },
+      options:{
+        plugins:{
+          legend:{labels:{color:'#9aa3bb',font:{family:'Inter'}}},
+          tooltip:{
+            backgroundColor:'rgba(22, 26, 34, 0.95)',
+            titleColor:'#eaf0ff',
+            bodyColor:'#eaf0ff',
+            borderColor:'rgba(99, 102, 241, 0.3)',
+            borderWidth:1,
+            cornerRadius:8
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#8b95b0',font:{family:'Inter'}},grid:{display:false}},
+          y:{
+            grace: '10%',
+            ticks:{color:'#8b95b0',font:{family:'Inter'},callback:v=>fmtShort(v)},
+            grid:{color:'rgba(45,52,70,0.3)'}
+          }
+        }
+      }
+    });
+  }
+
+  destroyChart('chartPDV');
+  const c2=document.getElementById('chartPDV');
+  if(c2&&pdvKpis.length) {
+    charts.chartPDV=new Chart(c2,{
+      type:'bar',
+      plugins: [chartDataLabelsPlugin],
+      data:{
+        labels:pdvKpis.map(k=>getNVName(k.nvId)),
+        datasets:[
+          {
+            label:'DS Thực',
+            data:pdvKpis.map(k=>k.dsthuc),
+            backgroundColor:'rgba(20, 184, 166, 0.85)',
+            borderColor:'#14b8a6',
+            borderWidth:1,
+            borderRadius:6
+          },
+          {
+            label:'DS Áp',
+            data:pdvKpis.map(k=>k.dsap),
+            backgroundColor:'rgba(16, 185, 129, 0.25)',
+            borderColor:'rgba(16, 185, 129, 0.7)',
+            borderWidth:1,
+            borderRadius:6
+          }
+        ]
+      },
+      options:{
+        plugins:{
+          legend:{labels:{color:'#9aa3bb',font:{family:'Inter'}}},
+          tooltip:{
+            backgroundColor:'rgba(22, 26, 34, 0.95)',
+            titleColor:'#eaf0ff',
+            bodyColor:'#eaf0ff',
+            borderColor:'rgba(99, 102, 241, 0.3)',
+            borderWidth:1,
+            cornerRadius:8
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#8b95b0',font:{family:'Inter'}},grid:{display:false}},
+          y:{
+            grace: '10%',
+            ticks:{color:'#8b95b0',font:{family:'Inter'},callback:v=>fmtShort(v)},
+            grid:{color:'rgba(45,52,70,0.3)'}
+          }
+        }
+      }
+    });
+  }
+
+  const tourSums={};
+  DB.tours.filter(t=>t.monthKey===mk).forEach(t=>{
+    [{id:t.pic,a:t.tienPIC},{id:t.ktv,a:t.tienKTV},{id:t.bs,a:t.tienBS}].forEach(x=>{
+      if(x.id)tourSums[x.id]=(tourSums[x.id]||0)+x.a;
+    });
+  });
+
+  destroyChart('chartTourNV');
+  const c3=document.getElementById('chartTourNV');
+  if(c3) {
+    charts.chartTourNV=new Chart(c3,{
+      type:'bar',
+      plugins: [chartDataLabelsPlugin],
+      data:{
+        labels:Object.keys(tourSums).map(getNVName),
+        datasets:[{
+          label:'Tổng Tour',
+          data:Object.values(tourSums),
+          backgroundColor:'rgba(245, 158, 11, 0.8)',
+          borderColor:'#f59e0b',
+          borderWidth:1,
+          borderRadius:6
+        }]
+      },
+      options:{
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'rgba(22, 26, 34, 0.95)',
+            titleColor:'#eaf0ff',
+            bodyColor:'#eaf0ff',
+            borderColor:'rgba(99, 102, 241, 0.3)',
+            borderWidth:1,
+            cornerRadius:8
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#8b95b0',font:{family:'Inter'}},grid:{display:false}},
+          y:{
+            grace: '10%',
+            ticks:{color:'#8b95b0',font:{family:'Inter'},callback:v=>fmtShort(v)},
+            grid:{color:'rgba(45,52,70,0.3)'}
+          }
+        }
+      }
+    });
+  }
+
+  destroyChart('chartLuongNV');
+  const c4=document.getElementById('chartLuongNV');
+  if(c4&&sals.length) {
+    charts.chartLuongNV=new Chart(c4,{
+      type:'bar',
+      plugins: [chartDataLabelsPlugin],
+      data:{
+        labels:sals.map(s=>getNVName(s.nvId)),
+        datasets:[{
+          label:'Thực Lĩnh',
+          data:sals.map(s=>s.thuclinh),
+          backgroundColor:sals.map((_,i)=>`hsla(${260 + i*12}, 75%, 65%, 0.8)`),
+          borderColor:sals.map((_,i)=>`hsla(${260 + i*12}, 75%, 65%, 1)`),
+          borderWidth:1,
+          borderRadius:6
+        }]
+      },
+      options:{
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'rgba(22, 26, 34, 0.95)',
+            titleColor:'#eaf0ff',
+            bodyColor:'#eaf0ff',
+            borderColor:'rgba(99, 102, 241, 0.3)',
+            borderWidth:1,
+            cornerRadius:8
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#8b95b0',font:{family:'Inter'},maxRotation:45},grid:{display:false}},
+          y:{
+            grace: '10%',
+            ticks:{color:'#8b95b0',font:{family:'Inter'},callback:v=>fmtShort(v)},
+            grid:{color:'rgba(45,52,70,0.3)'}
+          }
+        }
+      }
+    });
+  }
+
+  const bcBody=document.getElementById('bcBody');
+  if(bcBody){
+    const depts={};
+    sals.forEach(s=>{
+      const nv=getNV(s.nvId);
+      if(!nv)return;
+      const pb=nv.phongban;
+      if(!depts[pb])depts[pb]={count:0,lcb:0,tour:0,kpi:0,pcan:0,khautru:0,thuclinh:0};
+      depts[pb].count++;
+      depts[pb].lcb+=s.luongTinh;
+      depts[pb].tour+=s.tour;
+      depts[pb].kpi+=(s.luongKPI||0);
+      depts[pb].pcan+=s.pcan;
+      depts[pb].khautru+=(s.kyquy||0)+(s.phattle||0);
+      depts[pb].thuclinh+=s.thuclinh;
+    });
+    bcBody.innerHTML=Object.entries(depts).map(([pb,d])=>`<tr><td><strong>${pbLabel(pb)}</strong></td><td>${d.count}</td><td class="amount">${fmt(d.lcb)}</td><td class="amount">${fmt(d.tour)}</td><td class="amount-blue">${fmt(d.kpi)}</td><td>${fmt(d.pcan)}</td><td class="amount-red">${fmt(d.khautru)}</td><td class="amount" style="font-weight:700">${fmt(d.thuclinh)}</td></tr>`).join('');
+  }
+}
 
 // === EXPORT / PRINT ===
 function exportData(){const mk=getMonth().key;const sals=DB.salaries.filter(s=>s.monthKey===mk);const rows=sals.map((s,i)=>{const nv=getNV(s.nvId);return {'STT':i+1,'Nhân Viên':nv?nv.name:'','Chức Vụ':nv?nv.chucvu:'','Trạng Thái':nv?nv.trangthai:'','Giờ Chuẩn':s.giocongChuan,'NCC':s.ncc,'Công TT':s.congTT,'Ngày Lễ+':s.ngayleLam,'NCTL':s.nctl,'Lương CB':s.luongcb,'Lương NC':s.luongTinh,'Tour':s.tour,'Doanh Số':s.dsKPI,'Lương KPI':s.luongKPI,'Giờ OT':s.gioOT,'Tiền OT':s.tienOT,'Ăn Trưa':s.pcan,'Trách Nhiệm':s.pctn,'Đi Lại':s.pcdl,'Hỗ Trợ':s.hotro,'Tổng PC':s.tongPC,'Thưởng':s.thuong,'Tổng Thu':s.tongThu,'Ký Quỹ':s.kyquy,'Trừ Khác':s.trukhac,'Ứng Lương':s.ungluong,'Thực Lãnh':s.thuclinh};});if(typeof XLSX!=='undefined'){const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'BangLuong');XLSX.writeFile(wb,`BangLuong_${mk}.xlsx`);}else{showToast('Thư viện XLSX chưa tải xong!','error');}}
