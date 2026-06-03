@@ -205,6 +205,39 @@ body::before{
   box-shadow: var(--shadow-glow);
 }
 
+.topbar-sync-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  transition: var(--transition);
+  cursor: pointer;
+  user-select: none;
+  margin-right: 4px;
+}
+.topbar-sync-status:hover {
+  background: var(--bg2);
+  border-color: var(--accent);
+}
+.topbar-sync-status.syncing {
+  color: var(--cyan);
+  border-color: rgba(6,182,212,0.4);
+}
+.topbar-sync-status.success {
+  color: var(--green);
+  border-color: rgba(16,185,129,0.4);
+}
+.topbar-sync-status.error {
+  color: var(--red);
+  border-color: rgba(239,68,68,0.4);
+}
+
 .topbar-actions{display:flex;gap:8px}
 
 /* ===== BUTTONS ===== */
@@ -687,6 +720,13 @@ body::before{
     font-size: 12px;
     background-position: right 6px center;
     background-size: 12px;
+  }
+  .topbar-sync-status .sync-text {
+    display: none;
+  }
+  .topbar-sync-status {
+    padding: 6px 8px;
+    margin-right: 0;
   }
   .page-container {
     padding: 12px;

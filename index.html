@@ -76,6 +76,10 @@
           <option value="12-2026">Tháng 12/2026</option>
         </select>
       </div>
+      <div id="syncStatus" class="topbar-sync-status" onclick="syncCloudDownload(false)" title="Nhấp để đồng bộ lại dữ liệu">
+        <span class="sync-icon">🔄</span>
+        <span class="sync-text">Đang đồng bộ...</span>
+      </div>
       <div class="topbar-actions">
         <button class="btn btn-accent" onclick="document.getElementById('masterImportFile').click()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">📂 <span class="btn-text">Import Tổng Hợp</span></button>
         <input type="file" id="masterImportFile" accept=".xlsx,.xls" style="display:none" onchange="handleMasterImport(event)" />

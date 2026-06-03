@@ -3238,9 +3238,29 @@ function loadSyncUrl() {
   if (input) input.value = url;
 }
 
+function updateSyncStatus(status, text) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.className = 'topbar-sync-status ' + status;
+  const iconEl = el.querySelector('.sync-icon');
+  const textEl = el.querySelector('.sync-text');
+  
+  const icons = {
+    syncing: '⏳',
+    success: '✅',
+    error: '❌',
+    idle: '🔄'
+  };
+  
+  if (iconEl) iconEl.textContent = icons[status] || '🔄';
+  if (textEl) textEl.textContent = text;
+}
+
 async function syncCloudUpload(isAuto = false) {
+  updateSyncStatus('syncing', 'Đang lưu...');
   const url = localStorage.getItem('spa2_sync_google_url') || DEFAULT_SYNC_URL;
   if (!url) {
+    updateSyncStatus('error', 'Lỗi đồng bộ');
     if (!isAuto) showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
     return;
   }
@@ -3268,12 +3288,15 @@ async function syncCloudUpload(isAuto = false) {
     });
     const data = await res.json();
     if (data && data.status === 'success') {
+      updateSyncStatus('success', 'Đã đồng bộ');
       if (!isAuto) showToast('Đã đồng bộ tải dữ liệu lên Google Drive thành công!', 'success');
     } else {
+      updateSyncStatus('success', 'Đã đồng bộ');
       if (!isAuto) showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
     }
   } catch(err) {
     console.error(err);
+    updateSyncStatus('error', 'Lỗi đồng bộ');
     if (!isAuto) showToast('Tải lên thành công (Đã cập nhật tệp trên Drive)!');
   } finally {
     if (!isAuto && btn) {
@@ -3289,9 +3312,11 @@ async function syncCloudDownload(isAuto = false) {
     return;
   }
   lastSyncTime = Date.now();
+  updateSyncStatus('syncing', 'Đang tải...');
 
   const url = localStorage.getItem('spa2_sync_google_url') || DEFAULT_SYNC_URL;
   if (!url) {
+    updateSyncStatus('error', 'Lỗi đồng bộ');
     if (!isAuto) showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
     return;
   }
@@ -3311,17 +3336,20 @@ async function syncCloudDownload(isAuto = false) {
     const data = await res.json();
     
     if (data && data.status === 'empty') {
+      updateSyncStatus('success', 'Chưa có backup');
       if (!isAuto) showToast('Thư mục Drive trống hoặc chưa có dữ liệu sao lưu!', 'warning');
       return;
     }
     
     if (!data || !Array.isArray(data.nhanvien)) {
+      updateSyncStatus('error', 'Dữ liệu lỗi');
       if (!isAuto) showToast('Dữ liệu tải về không hợp lệ!', 'error');
       return;
     }
     
     if (!isAuto) {
       if (!confirm('Khôi phục dữ liệu từ đám mây sẽ ghi đè toàn bộ dữ liệu hiện tại trên máy này. Bạn có chắc chắn muốn tiếp tục?')) {
+        updateSyncStatus('success', 'Đã đồng bộ');
         return;
       }
     }
@@ -3340,6 +3368,7 @@ async function syncCloudDownload(isAuto = false) {
       }
     }
     
+    updateSyncStatus('success', 'Đã đồng bộ');
     if (hasDifference) {
       DB.saveAll();
       showToast(isAuto ? '🔄 Đã tự động cập nhật dữ liệu mới nhất từ đám mây!' : 'Tải dữ liệu từ đám mây thành công! Trang web đang tải lại...', 'success');
@@ -3355,6 +3384,7 @@ async function syncCloudDownload(isAuto = false) {
     }
   } catch(err) {
     console.error(err);
+    updateSyncStatus('error', 'Lỗi đồng bộ');
     if (!isAuto) {
       showToast('Lỗi: ' + err.message + '. Hãy chắc chắn đã bấm "Tải lên" ở máy gốc trước và cấp quyền cho Script!', 'error');
     }
