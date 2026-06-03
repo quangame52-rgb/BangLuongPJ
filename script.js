@@ -3405,9 +3405,7 @@ async function syncCloudDownload(isAuto = false) {
     updateSyncStatus('error', 'Lỗi đồng bộ');
     const el = document.getElementById('syncStatus');
     if (el) el.title = 'Lỗi tải về: ' + err.message + ' (Nhấp để đồng bộ lại)';
-    if (!isAuto) {
-      showToast('Lỗi: ' + err.message + '. Hãy chắc chắn đã bấm "Tải lên" ở máy gốc trước và cấp quyền cho Script!', 'error');
-    }
+    showToast('Lỗi đồng bộ: ' + err.message + ' (Hãy thử tải lại trang hoặc kiểm tra mạng/VPN)', 'error');
   } finally {
     if (!isAuto && btn) {
       btn.textContent = oldText;
