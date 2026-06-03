@@ -3153,6 +3153,70 @@ function confirmMasterImport(){
 }
 
 
+// === BACKUP & RESTORE ===
+function backupDatabase() {
+  const backup = {};
+  ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
+    backup[k] = DB[k];
+  });
+  
+  const now = new Date();
+  const dateStr = now.getFullYear() + 
+                  '-' + String(now.getMonth()+1).padStart(2,'0') + 
+                  '-' + String(now.getDate()).padStart(2,'0') + 
+                  '_' + String(now.getHours()).padStart(2,'0') + 
+                  '-' + String(now.getMinutes()).padStart(2,'0');
+  
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `SpaPayroll_Backup_${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Đã tải xuống file sao lưu thành công!');
+}
+
+function restoreDatabase(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      
+      if (!data || !Array.isArray(data.nhanvien)) {
+        showToast('File sao lưu không hợp lệ!', 'error');
+        return;
+      }
+      
+      if (!confirm('Khôi phục dữ liệu sẽ ghi đè toàn bộ dữ liệu hiện tại trên máy này. Bạn có chắc chắn muốn tiếp tục?')) {
+        event.target.value = '';
+        return;
+      }
+      
+      ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
+        if (data[k] !== undefined) {
+          DB[k] = data[k];
+        }
+      });
+      DB.saveAll();
+      
+      showToast('Khôi phục dữ liệu thành công! Trình duyệt sẽ tự tải lại...', 'success');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch(err) {
+      console.error(err);
+      showToast('Lỗi đọc file sao lưu!', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
 // === BOOT ===
 initDefaultSchedules();
 populateSelects();refreshPage();

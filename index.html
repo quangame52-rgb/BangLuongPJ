@@ -571,7 +571,7 @@
       <!-- CÀI ĐẶT PAGE -->
       <div id="page-caidat" class="page">
         <div class="page-header">
-          <h1>⚙️ Cài Đặt Giờ Làm Việc</h1>
+          <h1>⚙️ Cài Đặt Hệ Thống</h1>
         </div>
         <div class="card">
           <div class="card-header"><h3>Lịch Làm Việc Theo Phòng Ban</h3></div>
@@ -581,6 +581,23 @@
             </p>
             <div id="scheduleCards"></div>
             <button class="btn btn-primary" style="margin-top:16px" onclick="saveAllSchedules()">💾 Lưu Tất Cả</button>
+          </div>
+        </div>
+        
+        <div class="card mt-20">
+          <div class="card-header"><h3>💾 Sao Lưu & Khôi Phục Dữ Liệu</h3></div>
+          <div style="padding:20px">
+            <p style="color:var(--text2);margin-bottom:16px;font-size:13px">
+              Vì lý do bảo mật dữ liệu tuyệt đối, phần mềm lưu toàn bộ thông tin cục bộ trên trình duyệt máy tính của bạn (không gửi lên máy chủ). 
+              Khi cần làm việc trên máy tính khác, hãy xuất file sao lưu từ máy này và nhập vào máy kia.
+            </p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="backupDatabase()">📤 Xuất File Sao Lưu (.json)</button>
+              <label class="btn btn-secondary" style="cursor:pointer">
+                📥 Nhập File Sao Lưu (.json)
+                <input type="file" accept=".json" style="display:none" onchange="restoreDatabase(event)" />
+              </label>
+            </div>
           </div>
         </div>
       </div>
