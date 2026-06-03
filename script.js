@@ -3286,9 +3286,7 @@ async function syncCloudUpload(isAuto = false) {
       method: 'POST',
       body: JSON.stringify(backup),
       mode: 'no-cors',
-      credentials: 'omit',
-      keepalive: true,
-      redirect: 'manual'
+      credentials: 'omit'
     });
     updateSyncStatus('success', 'Đã đồng bộ');
     const el = document.getElementById('syncStatus');
