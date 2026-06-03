@@ -3218,6 +3218,8 @@ function restoreDatabase(event) {
 }
 
 // === GOOGLE DRIVE SYNC ===
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzRiBdMPZPLJiT9R9JCgRDOUdmHVwPRQmU1rRx3o_P6GIAALDR7w_C36KGgksBz5_-fOA/exec';
+
 function saveSyncUrl() {
   const url = document.getElementById('syncGoogleUrl').value.trim();
   localStorage.setItem('spa2_sync_google_url', url);
@@ -3225,13 +3227,13 @@ function saveSyncUrl() {
 }
 
 function loadSyncUrl() {
-  const url = localStorage.getItem('spa2_sync_google_url') || '';
+  const url = localStorage.getItem('spa2_sync_google_url') || DEFAULT_SYNC_URL;
   const input = document.getElementById('syncGoogleUrl');
   if (input) input.value = url;
 }
 
 async function syncCloudUpload() {
-  const url = localStorage.getItem('spa2_sync_google_url');
+  const url = localStorage.getItem('spa2_sync_google_url') || DEFAULT_SYNC_URL;
   if (!url) {
     showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
     return;
@@ -3268,7 +3270,7 @@ async function syncCloudUpload() {
 }
 
 async function syncCloudDownload() {
-  const url = localStorage.getItem('spa2_sync_google_url');
+  const url = localStorage.getItem('spa2_sync_google_url') || DEFAULT_SYNC_URL;
   if (!url) {
     showToast('Vui lòng cấu hình URL Google Script trước!', 'error');
     return;
