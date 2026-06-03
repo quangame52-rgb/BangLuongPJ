@@ -52,9 +52,15 @@
         <span class="nav-icon">📝</span><span class="nav-label">Nhật Ký</span><span class="log-badge" id="logBadge" style="display:none"></span>
       </button>
     </nav>
-    <div class="sidebar-footer">
-      <div class="month-selector">
-        <label>Tháng/Năm</label>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-month-selector">
         <select id="globalMonth" onchange="onMonthChange()">
           <option value="1-2026">Tháng 1/2026</option>
           <option value="2-2026">Tháng 2/2026</option>
@@ -70,15 +76,6 @@
           <option value="12-2026">Tháng 12/2026</option>
         </select>
       </div>
-    </div>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <main class="main-content" id="mainContent">
-    <!-- TOP BAR -->
-    <header class="topbar">
-      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-      <div class="topbar-title" id="topbarTitle">Dashboard</div>
       <div class="topbar-actions">
         <button class="btn btn-accent" onclick="document.getElementById('masterImportFile').click()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">📂 <span class="btn-text">Import Tổng Hợp</span></button>
         <input type="file" id="masterImportFile" accept=".xlsx,.xls" style="display:none" onchange="handleMasterImport(event)" />
