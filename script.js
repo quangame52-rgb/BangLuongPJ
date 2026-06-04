@@ -3441,8 +3441,19 @@ function triggerAutoUpload() {
   }, 2000);
 }
 
-// Auto sync when window gains focus
+// Auto sync when window gains focus (skipping if returning from a file picker to prevent download race conditions)
+window.filePickerOpen = false;
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
+    window.filePickerOpen = true;
+  }
+}, true);
+
 window.addEventListener('focus', () => {
+  if (window.filePickerOpen) {
+    window.filePickerOpen = false;
+    return;
+  }
   if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
     return;
   }
