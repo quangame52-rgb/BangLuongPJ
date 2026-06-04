@@ -10,6 +10,30 @@
   <link rel="stylesheet" href="style.css?v=3.1" />
 </head>
 <body>
+  <!-- Login Overlay -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="logo-icon">✦</div>
+        <span class="logo-text">SpaPayroll</span>
+      </div>
+      <h2 class="login-title">Đăng Nhập Hệ Thống</h2>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="loginUser">Tên đăng nhập</label>
+          <input type="text" id="loginUser" required placeholder="Nhập tên đăng nhập" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="loginPass">Mật khẩu</label>
+          <input type="password" id="loginPass" required placeholder="Nhập mật khẩu" autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, var(--accent), var(--purple)); border: none; margin-top: 10px;">
+          Đăng Nhập
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
@@ -52,6 +76,13 @@
         <span class="nav-icon">📝</span><span class="nav-label">Nhật Ký</span><span class="log-badge" id="logBadge" style="display:none"></span>
       </button>
     </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <span class="user-icon">👤</span>
+        <span class="user-name" id="currentUserName">Admin</span>
+      </div>
+      <button class="btn-logout" onclick="handleLogout()" title="Đăng xuất">🚪 Đăng xuất</button>
+    </div>
   </aside>
 
   <!-- MAIN CONTENT -->
@@ -81,7 +112,7 @@
         <span class="sync-text">Đang đồng bộ...</span>
       </div>
       <div class="topbar-actions">
-        <button class="btn btn-accent" onclick="document.getElementById('masterImportFile').click()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">📂 <span class="btn-text">Import Tổng Hợp</span></button>
+        <button class="btn btn-accent viewer-hide" onclick="document.getElementById('masterImportFile').click()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">📂 <span class="btn-text">Import Tổng Hợp</span></button>
         <input type="file" id="masterImportFile" accept=".xlsx,.xls" style="display:none" onchange="handleMasterImport(event)" />
         <button class="btn btn-primary" onclick="exportData()">⬇ <span class="btn-text">Xuất Excel</span></button>
         <button class="btn btn-ghost" onclick="printPage()">🖨️ <span class="btn-text">In</span></button>
@@ -164,8 +195,8 @@
         <div class="page-header">
           <h1>Quản Lý Nhân Viên</h1>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-secondary" onclick="openBulkEdit()">✏️ Sửa Toàn Bộ</button>
-            <button class="btn btn-primary" onclick="addNV()">+ Thêm Nhân Viên</button>
+            <button class="btn btn-secondary viewer-hide" onclick="openBulkEdit()">✏️ Sửa Toàn Bộ</button>
+            <button class="btn btn-primary viewer-hide" onclick="addNV()">+ Thêm Nhân Viên</button>
           </div>
         </div>
         <div class="card">
@@ -185,7 +216,7 @@
                   <th>Lương Cơ Bản</th>
                   <th>Ngày Công Chuẩn</th>
                   <th>Ký Quỹ</th>
-                  <th>Thao Tác</th>
+                  <th class="viewer-hide">Thao Tác</th>
                 </tr>
               </thead>
               <tbody id="nvBody"></tbody>
@@ -199,9 +230,9 @@
         <div class="page-header">
           <h1>Bảng Chấm Công <span class="month-badge" id="ccMonthBadge">T2/2026</span></h1>
           <div class="header-actions">
-            <button class="btn btn-danger" onclick="deleteAllCC()">🗑️ Xóa toàn bộ</button>
-            <button class="btn btn-secondary" onclick="document.getElementById('ccFileInput').click()">📂 Import Excel (Máy CC)</button>
-            <button class="btn btn-primary" onclick="openModal('modalCC')">+ Nhập Chấm Công</button>
+            <button class="btn btn-danger viewer-hide" onclick="deleteAllCC()">🗑️ Xóa toàn bộ</button>
+            <button class="btn btn-secondary viewer-hide" onclick="document.getElementById('ccFileInput').click()">📂 Import Excel (Máy CC)</button>
+            <button class="btn btn-primary viewer-hide" onclick="openModal('modalCC')">+ Nhập Chấm Công</button>
             <input type="file" id="ccFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleCCImport(event)" />
           </div>
         </div>
@@ -222,7 +253,7 @@
                   <th>NCC</th>
                   <th style="color:var(--cyan)">⏰ Giờ OT</th>
                   <th>Ghi Chú</th>
-                  <th>Thao Tác</th>
+                  <th class="viewer-hide">Thao Tác</th>
                 </tr>
               </thead>
               <tbody id="ccBody"></tbody>
@@ -236,11 +267,11 @@
         <div class="page-header">
           <h1>Tour Dịch Vụ <span class="month-badge" id="tourMonthBadge">T2/2026</span></h1>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-danger" onclick="deleteAllTours()">🗑️ Xóa toàn bộ</button>
-            <label class="btn btn-secondary" style="cursor:pointer">📂 Import Excel
+            <button class="btn btn-danger viewer-hide" onclick="deleteAllTours()">🗑️ Xóa toàn bộ</button>
+            <label class="btn btn-secondary viewer-hide" style="cursor:pointer">📂 Import Excel
               <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleTourImport(event)" />
             </label>
-            <button class="btn btn-primary" onclick="openModal('modalTour')">+ Thêm Tour</button>
+            <button class="btn btn-primary viewer-hide" onclick="openModal('modalTour')">+ Thêm Tour</button>
           </div>
         </div>
         <!-- Tour Stats -->
@@ -283,7 +314,7 @@
                   <th>Tiền PIC</th>
                   <th>Tiền BS</th>
                   <th>Ghi Chú</th>
-                  <th>Thao Tác</th>
+                  <th class="viewer-hide">Thao Tác</th>
                 </tr>
               </thead>
               <tbody id="tourBody"></tbody>
@@ -297,12 +328,12 @@
         <div class="page-header">
           <h1>KPI Doanh Số <span class="month-badge" id="kpiMonthBadge">T2/2026</span></h1>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-danger" onclick="deleteAllKPIs()">🗑️ Xóa toàn bộ</button>
-            <label class="btn btn-secondary" style="cursor:pointer">📂 Import Excel
+            <button class="btn btn-danger viewer-hide" onclick="deleteAllKPIs()">🗑️ Xóa toàn bộ</button>
+            <label class="btn btn-secondary viewer-hide" style="cursor:pointer">📂 Import Excel
               <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleKPIImport(event)" />
             </label>
-            <button class="btn btn-secondary" onclick="toggleKPIRules()">⚙️ Quy Tắc</button>
-            <button class="btn btn-primary" onclick="openModal('modalKPI')">+ Nhập KPI</button>
+            <button class="btn btn-secondary viewer-hide" onclick="toggleKPIRules()">⚙️ Quy Tắc</button>
+            <button class="btn btn-primary viewer-hide" onclick="openModal('modalKPI')">+ Nhập KPI</button>
           </div>
         </div>
         <!-- KPI Rules Panel -->
@@ -331,7 +362,7 @@
             </div>
           </div>
           <div style="padding:0 16px 16px;text-align:right">
-            <button class="btn btn-primary" onclick="saveKPIRules()">💾 Lưu Quy Tắc</button>
+            <button class="btn btn-primary viewer-hide" onclick="saveKPIRules()">💾 Lưu Quy Tắc</button>
           </div>
         </div>
         <div class="kpi-tabs">
@@ -347,11 +378,11 @@
         <div class="page-header">
           <h1>Bảng Lương <span class="month-badge" id="luongMonthBadge">T2/2026</span></h1>
           <div class="header-actions">
-            <label class="btn btn-secondary" style="cursor:pointer" title="Import file lương Excel">
+            <label class="btn btn-secondary viewer-hide" style="cursor:pointer" title="Import file lương Excel">
               📥 Import File Lương
               <input type="file" accept=".xlsx,.xls" onchange="handleSalaryImport(event)" style="display:none" />
             </label>
-            <button class="btn btn-secondary" onclick="calcAllSalary()">⚡ Tính Lương</button>
+            <button class="btn btn-secondary viewer-hide" onclick="calcAllSalary()">⚡ Tính Lương</button>
             <button class="btn btn-primary" onclick="printPage()">🖨️ In Bảng Lương</button>
           </div>
         </div>
@@ -373,7 +404,7 @@
                   <th rowspan="2" style="background:rgba(16,185,129,0.1)">Tổng Thu</th>
                   <th colspan="3" style="background:rgba(239,68,68,0.06)">KHẤU TRỪ</th>
                   <th rowspan="2" style="background:rgba(16,185,129,0.15)">Thực Lãnh</th>
-                  <th rowspan="2"></th>
+                  <th rowspan="2" class="viewer-hide"></th>
                 </tr>
                 <tr>
                   <th>Giờ Chuẩn</th>
@@ -410,8 +441,8 @@
         <div class="page-header">
           <h1>📋 Khấu Trừ <span class="month-badge" id="ktMonthBadge">T3/2026</span></h1>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-danger" onclick="deleteAllKT()">🗑️ Xóa toàn bộ</button>
-            <button class="btn btn-primary" onclick="openAddKT()">+ Thêm Khấu Trừ</button>
+            <button class="btn btn-danger viewer-hide" onclick="deleteAllKT()">🗑️ Xóa toàn bộ</button>
+            <button class="btn btn-primary viewer-hide" onclick="openAddKT()">+ Thêm Khấu Trừ</button>
           </div>
         </div>
         <!-- Stats -->
@@ -452,8 +483,7 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>STT</th><th>Ngày</th><th>Nhân Viên</th><th>Loại</th>
-                  <th>Số Tiền</th><th>Lần Ứng</th><th>Ghi Chú</th><th>Thao Tác</th>
+                  <th>STT</th><th>Ngày</th><th>Nhân Viên</th><th>Loại</th><th>Số Tiền</th><th>Lần Ứng</th><th>Ghi Chú</th><th class="viewer-hide">Thao Tác</th>
                 </tr>
               </thead>
               <tbody id="ktBody"></tbody>
@@ -467,9 +497,9 @@
         <div class="page-header">
           <h1>🎁 Phụ Cấp & Thưởng <span class="month-badge" id="pcMonthBadge">T3/2026</span></h1>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-secondary" onclick="openCopyPhucap()">📋 Copy từ tháng...</button>
-            <button class="btn btn-secondary" onclick="resetPhucapMonth()">🔄 Reset tháng</button>
-            <button class="btn btn-primary" onclick="saveAllPhucap()">💾 Lưu tất cả</button>
+            <button class="btn btn-secondary viewer-hide" onclick="openCopyPhucap()">📋 Copy từ tháng...</button>
+            <button class="btn btn-secondary viewer-hide" onclick="resetPhucapMonth()">🔄 Reset tháng</button>
+            <button class="btn btn-primary viewer-hide" onclick="saveAllPhucap()">💾 Lưu tất cả</button>
           </div>
         </div>
         <!-- Stats -->
@@ -581,7 +611,7 @@
               Cài đặt giờ làm việc cho từng phòng ban. Khi import chấm công, hệ thống sẽ dùng giờ vào của phòng ban tương ứng để tính trễ.
             </p>
             <div id="scheduleCards"></div>
-            <button class="btn btn-primary" style="margin-top:16px" onclick="saveAllSchedules()">💾 Lưu Tất Cả</button>
+            <button class="btn btn-primary viewer-hide" style="margin-top:16px" onclick="saveAllSchedules()">💾 Lưu Tất Cả</button>
           </div>
         </div>
         
@@ -602,8 +632,8 @@
               <input type="text" id="syncGoogleUrl" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%" onchange="saveSyncUrl()" />
             </div>
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">
-              <button class="btn btn-primary" id="btnCloudUpload" onclick="syncCloudUpload()">📤 Tải dữ liệu lên Drive</button>
-              <button class="btn btn-secondary" id="btnCloudDownload" onclick="syncCloudDownload()">📥 Tải dữ liệu từ Drive về máy</button>
+              <button class="btn btn-primary viewer-hide" id="btnCloudUpload" onclick="syncCloudUpload()">📤 Tải dữ liệu lên Drive</button>
+              <button class="btn btn-secondary viewer-hide" id="btnCloudDownload" onclick="syncCloudDownload()">📥 Tải dữ liệu từ Drive về máy</button>
               <button class="btn btn-ghost" onclick="openModal('modalGoogleGuide')">❓ Hướng dẫn cài đặt (2 phút)</button>
             </div>
             
@@ -612,10 +642,36 @@
             <h4 style="color:var(--text);margin-bottom:8px;font-size:13.5px">Cách 2: Sao lưu & Khôi phục thủ công bằng file tải về máy</h4>
             <div style="display:flex;gap:12px;flex-wrap:wrap">
               <button class="btn btn-secondary" onclick="backupDatabase()">📤 Xuất File Sao Lưu (.json)</button>
-              <label class="btn btn-secondary" style="cursor:pointer">
+              <label class="btn btn-secondary viewer-hide" style="cursor:pointer">
                 📥 Nhập File Sao Lưu (.json)
                 <input type="file" accept=".json" style="display:none" onchange="restoreDatabase(event)" />
               </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- USER ACCOUNTS MANAGEMENT CARD -->
+        <div class="card mt-20" id="cardUserManagement" style="display:none">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border)">
+            <h3 style="margin:0">👥 Quản Lý Tài Khoản Người Dùng</h3>
+            <button class="btn btn-sm btn-primary" onclick="openUserModal()">➕ Thêm Tài Khoản</button>
+          </div>
+          <div style="padding:20px">
+            <p style="color:var(--text2);margin-bottom:16px;font-size:13px">
+              Quản lý danh sách người dùng được phép truy cập hệ thống và phân quyền tương ứng.
+            </p>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Tên Đăng Nhập</th>
+                    <th>Họ Tên</th>
+                    <th>Vai Trò</th>
+                    <th>Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1300,6 +1356,45 @@ function doGet(e) {
       <div class="modal-footer">
         <button class="btn btn-primary" onclick="closeModal('modalGoogleGuide')">Đã Hiểu</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal User Form -->
+  <div class="modal-overlay" id="modalUserForm">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <h2 id="userModalTitle">Thêm Tài Khoản</h2>
+        <button class="modal-close" onclick="closeModal('modalUserForm')">×</button>
+      </div>
+      <form id="userForm" onsubmit="saveUser(event)">
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:20px">
+          <input type="hidden" id="userFormId" />
+          <div class="form-group" style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:13px;color:var(--text2)">Tên đăng nhập</label>
+            <input type="text" id="userFormUsername" required placeholder="Ví dụ: nhanvien1" style="width:100%" autocomplete="username" />
+          </div>
+          <div class="form-group" style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:13px;color:var(--text2)">Mật khẩu</label>
+            <input type="password" id="userFormPassword" required placeholder="Nhập mật khẩu" style="width:100%" autocomplete="new-password" />
+          </div>
+          <div class="form-group" style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:13px;color:var(--text2)">Họ tên hiển thị</label>
+            <input type="text" id="userFormName" required placeholder="Ví dụ: Nguyễn Văn A" style="width:100%" />
+          </div>
+          <div class="form-group" style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:13px;color:var(--text2)">Phân quyền</label>
+            <select id="userFormRole" required style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text)">
+              <option value="viewer">Viewer (Chỉ xem dữ liệu)</option>
+              <option value="editor">Editor (Được nhập/sửa dữ liệu)</option>
+              <option value="admin">Admin (Quyền quản trị toàn quyền)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalUserForm')">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu</button>
+        </div>
+      </form>
     </div>
   </div>
 

@@ -817,3 +817,169 @@ body::before{
 .compare-badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700}
 .compare-badge.ok{background:rgba(16,185,129,0.15);color:var(--green)}
 .compare-badge.err{background:rgba(239,68,68,0.15);color:var(--red)}
+
+/* ===== USER AUTHENTICATION & SECURITY ===== */
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, rgba(30, 20, 50, 0.98), rgba(10, 8, 16, 0.99));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+.login-box {
+  background: rgba(26, 21, 44, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 40px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5), 0 0 30px 4px rgba(139, 92, 246, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: loginFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes loginFadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.login-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.login-logo .logo-icon {
+  font-size: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+}
+.login-logo .logo-text {
+  font-size: 24px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #a5b4fc, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.login-title {
+  text-align: center;
+  font-size: 20px;
+  color: var(--text);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.login-box .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.login-box label {
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 500;
+}
+.login-box input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+.login-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+}
+.login-box .btn-block {
+  width: 100%;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+/* Sidebar user footer */
+.sidebar-footer {
+  padding: 14px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text);
+  font-weight: 600;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-info .user-icon {
+  font-size: 15px;
+  filter: grayscale(0.2);
+}
+.btn-logout {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  color: #f87171;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+  font-weight: 600;
+}
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* User management styles */
+.user-role-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.user-role-badge.admin {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c084fc;
+}
+.user-role-badge.editor {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+.user-role-badge.viewer {
+  background: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+}
+
+/* Role-based permissions visibility */
+body.role-viewer .viewer-hide { display: none !important; }
+body.role-viewer .viewer-disable { pointer-events: none !important; opacity: 0.6 !important; }
+body.role-viewer th:last-child, body.role-viewer td:last-child { display: none !important; }
+
+body.role-editor .editor-hide { display: none !important; }

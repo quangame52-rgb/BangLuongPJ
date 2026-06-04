@@ -57,6 +57,11 @@ const DB = {
       if (nv.kyquy === undefined) nv.kyquy = 0;
     });
     if (!this.settings.antrua_per_day) this.settings.antrua_per_day = 25000;
+    if (!this.settings.users) {
+      this.settings.users = [
+        { id: 'usr_admin', username: 'admin', password: '791522Mm', name: 'Quản trị viên', role: 'admin' }
+      ];
+    }
     if (this.calamviec.length === 0) {
       this.calamviec = [
         {name:'Ca Ngày', giovao:'09:00', giora:'19:00', nghitrua_bat:'12:00', nghitrua_ket:'13:30', tolerance:5, phatPerMin:0},

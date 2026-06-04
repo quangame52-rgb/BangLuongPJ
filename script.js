@@ -4,16 +4,16 @@ let currentPage='dashboard', kpiTab='ptv', charts={};
 function switchPage(p){currentPage=p;document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.page===p)});document.getElementById('topbarTitle').textContent={dashboard:'Dashboard',nhanvien:'Nhân Viên',chamcong:'Chấm Công',tour:'Tour Dịch Vụ',kpi:'KPI Doanh Số',luong:'Bảng Lương',khautru:'Khấu Trừ',phucap:'Phụ Cấp & Thưởng',baocao:'Báo Cáo',caidat:'Cài Đặt',nhatky:'Nhật Ký'}[p]||p;if(p==='nhatky'){const b=document.getElementById('logBadge');if(b)b.style.display='none';}const sidebar=document.getElementById('sidebar');if(sidebar)sidebar.classList.remove('open');refreshPage();}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
 function onMonthChange(){const m=getMonth();['dashMonthBadge','ccMonthBadge','tourMonthBadge','kpiMonthBadge','luongMonthBadge','ktMonthBadge','pcMonthBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=m.label;});const sidebar=document.getElementById('sidebar');if(sidebar)sidebar.classList.remove('open');refreshPage();}
-function refreshPage(){loadSyncUrl();renderNVTable();renderCCTable();renderTourTable();renderKPITab();calcAllSalary();renderDashboard();renderBaoCao();renderKTPage();renderPhucapPage();loadMonthConfig();populateSelects();renderSchedules();renderLogs();}
+function refreshPage(){applyUserPermissions();loadSyncUrl();renderNVTable();renderCCTable();renderTourTable();renderKPITab();calcAllSalary();renderDashboard();renderBaoCao();renderKTPage();renderPhucapPage();loadMonthConfig();populateSelects();renderSchedules();renderLogs();renderUserTable();}
 let appLogs = JSON.parse(localStorage.getItem('spa_logs')||'[]');
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3500);addLog(msg,type);}
-function addLog(msg,type='info',details=''){appLogs.unshift({msg,type,details,time:new Date().toLocaleString('vi-VN')});if(appLogs.length>200)appLogs=appLogs.slice(0,200);localStorage.setItem('spa_logs',JSON.stringify(appLogs));if(currentPage!=='nhatky'){const b=document.getElementById('logBadge');if(b){const errCnt=appLogs.filter(l=>l.type==='error').length;if(errCnt>0){b.textContent=errCnt;b.style.display='inline-flex';}}}renderLogs();}
+function addLog(msg,type='info',details=''){const user = sessionStorage.getItem('currentUser') || 'Hệ thống'; const finalMsg = /^\[.+?\]\s/.test(msg) ? msg : `[${user}] ${msg}`; appLogs.unshift({msg:finalMsg,type,details,time:new Date().toLocaleString('vi-VN')});if(appLogs.length>200)appLogs=appLogs.slice(0,200);localStorage.setItem('spa_logs',JSON.stringify(appLogs));if(currentPage!=='nhatky'){const b=document.getElementById('logBadge');if(b){const errCnt=appLogs.filter(l=>l.type==='error').length;if(errCnt>0){b.textContent=errCnt;b.style.display='inline-flex';}}}renderLogs();}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function populateSelects(){const nvs=DB.nhanvien;const opts=nvs.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');['ccNV','kpiNV'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});const optsBlank='<option value="">-- Chọn --</option>'+opts;['tourPIC','tourKTV','tourBS','tourNVFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=(id==='tourNVFilter'?'<option value="">-- Tất cả nhân viên --</option>'+opts:optsBlank);});}
 
 // === NV TABLE ===
-function renderNVTable(filter=''){const body=document.getElementById('nvBody');if(!body)return;const nvs=DB.nhanvien.filter(n=>!filter||n.name.toLowerCase().includes(filter.toLowerCase())||(n.manv&&n.manv.includes(filter)));body.innerHTML=nvs.map((n,i)=>`<tr><td>${i+1}</td><td><span class="badge badge-purple">${n.manv||'-'}</span></td><td><strong>${n.name}</strong></td><td>${n.chucvu}</td><td>${pbLabel(n.phongban)}</td><td>${badgeFor(n.trangthai)}</td><td class="amount">${fmt(n.luongcb)}</td><td>${n.ngaycongchuan}</td><td class="amount">${n.kyquy?fmt(n.kyquy):"-"}</td><td><button class="btn btn-sm btn-secondary" onclick="editNV('${n.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteNV('${n.id}')">🗑️</button></td></tr>`).join('');}
+function renderNVTable(filter=''){const body=document.getElementById('nvBody');if(!body)return;const nvs=DB.nhanvien.filter(n=>!filter||n.name.toLowerCase().includes(filter.toLowerCase())||(n.manv&&n.manv.includes(filter)));body.innerHTML=nvs.map((n,i)=>`<tr><td>${i+1}</td><td><span class="badge badge-purple">${n.manv||'-'}</span></td><td><strong>${n.name}</strong></td><td>${n.chucvu}</td><td>${pbLabel(n.phongban)}</td><td>${badgeFor(n.trangthai)}</td><td class="amount">${fmt(n.luongcb)}</td><td>${n.ngaycongchuan}</td><td class="amount">${n.kyquy?fmt(n.kyquy):"-"}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editNV('${n.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteNV('${n.id}')">🗑️</button></td></tr>`).join('');}
 function filterNV(v){renderNVTable(v);}
 // === BULK EDIT ===
 function openBulkEdit(){
@@ -61,14 +61,14 @@ function editNV(id){const n=getNV(id);if(!n)return;document.getElementById('nvId
 function deleteNV(id){if(!confirm('Xóa nhân viên này?'))return;DB.nhanvien=DB.nhanvien.filter(n=>n.id!==id);DB.save('nhanvien');refreshPage();showToast('Đã xóa!');}
 
 // === CC TABLE ===
-function renderCCTable(){const body=document.getElementById('ccBody');if(!body)return;const mk=getMonth().key;const ccs=DB.chamcong.filter(c=>c.monthKey===mk);body.innerHTML=ccs.map((c,i)=>{const nv=getNV(c.nvId);if(!nv)return '';const nc=c.ncc!==undefined?c.ncc:(nv.ngaycongchuan||26);const chucvu=c.chucvu||nv.chucvu;const nctl=(c.ngaycongtt||0)+(c.ngayle||0);return `<tr><td>${i+1}</td><td><strong>${nv.name}</strong></td><td>${chucvu}</td><td>${pbLabel(nv.phongban)}</td><td>${badgeFor(nv.trangthai)}</td><td>${c.ngaycongtt||0}</td><td style="color:#f59e0b;font-weight:700">${c.ngayle||0}</td><td style="font-weight:700">${nctl}</td><td>${c.ngaynghi||0}</td><td>${nc}</td><td style="color:var(--cyan)">${c.gioOT||0}</td><td>${c.ghichu||''}</td><td><button class="btn btn-sm btn-secondary" onclick="editCC('${c.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteCC('${c.id}')">🗑️</button></td></tr>`;}).join('');}
+function renderCCTable(){const body=document.getElementById('ccBody');if(!body)return;const mk=getMonth().key;const ccs=DB.chamcong.filter(c=>c.monthKey===mk);body.innerHTML=ccs.map((c,i)=>{const nv=getNV(c.nvId);if(!nv)return '';const nc=c.ncc!==undefined?c.ncc:(nv.ngaycongchuan||26);const chucvu=c.chucvu||nv.chucvu;const nctl=(c.ngaycongtt||0)+(c.ngayle||0);return `<tr><td>${i+1}</td><td><strong>${nv.name}</strong></td><td>${chucvu}</td><td>${pbLabel(nv.phongban)}</td><td>${badgeFor(nv.trangthai)}</td><td>${c.ngaycongtt||0}</td><td style="color:#f59e0b;font-weight:700">${c.ngayle||0}</td><td style="font-weight:700">${nctl}</td><td>${c.ngaynghi||0}</td><td>${nc}</td><td style="color:var(--cyan)">${c.gioOT||0}</td><td>${c.ghichu||''}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editCC('${c.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteCC('${c.id}')">🗑️</button></td></tr>`;}).join('');}
 function saveCC(){const id=document.getElementById('ccId').value;const data={nvId:document.getElementById('ccNV').value,monthKey:getMonth().key,ngaycongtt:+document.getElementById('ccNgayCongTT').value||0,ngayle:+document.getElementById('ccNgayLe').value||0,ngaynghi:+document.getElementById('ccNgayNghi').value||0,gioOT:+document.getElementById('ccGioOT').value||0,ghichu:document.getElementById('ccGhiChu').value};if(id){const cc=DB.chamcong.find(c=>c.id===id);Object.assign(cc,data);}else{data.id=genId();DB.chamcong.push(data);}DB.save('chamcong');closeModal('modalCC');refreshPage();showToast('Đã lưu chấm công!');}
 function editCC(id){const c=DB.chamcong.find(x=>x.id===id);if(!c)return;document.getElementById('ccId').value=c.id;document.getElementById('ccNV').value=c.nvId;document.getElementById('ccNgayCongTT').value=c.ngaycongtt;document.getElementById('ccNgayLe').value=c.ngayle||0;document.getElementById('ccNgayNghi').value=c.ngaynghi;document.getElementById('ccGioOT').value=c.gioOT||0;document.getElementById('ccGhiChu').value=c.ghichu;openModal('modalCC');}
 function deleteCC(id){if(!confirm('Xóa?'))return;DB.chamcong=DB.chamcong.filter(c=>c.id!==id);DB.save('chamcong');refreshPage();showToast('Đã xóa!');}
 function deleteAllCC(){const mk=getMonth().key;const count=DB.chamcong.filter(c=>c.monthKey===mk).length;if(!count){showToast('Không có dữ liệu chấm công!','error');return;}if(!confirm('Xóa toàn bộ '+count+' bản ghi chấm công tháng này?'))return;DB.chamcong=DB.chamcong.filter(c=>c.monthKey!==mk);DB.save('chamcong');refreshPage();showToast('Đã xóa '+count+' bản ghi chấm công!');}
 
 // === TOUR ===
-function renderTourTable(){const body=document.getElementById('tourBody');if(!body)return;const mk=getMonth().key;const flt=document.getElementById('tourNVFilter');const fv=flt?flt.value:'';let tours=DB.tours.filter(t=>t.monthKey===mk);if(fv)tours=tours.filter(t=>t.pic===fv||t.ktv===fv||t.bs===fv);body.innerHTML=tours.map(t=>`<tr><td>${t.ngay}</td><td>${t.khach}</td><td>${t.dichvu}</td><td>${getNVName(t.pic)}</td><td>${getNVName(t.bs)}</td><td class="amount">${fmt(t.tienPIC)}</td><td class="amount">${fmt(t.tienBS)}</td><td>${t.ghichu||''}</td><td><button class="btn btn-sm btn-secondary" onclick="editTour('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTour('${t.id}')">🗑️</button></td></tr>`).join('');const totalPIC=tours.reduce((s,t)=>s+t.tienPIC,0);const totalBS=tours.reduce((s,t)=>s+t.tienBS,0);const el=id=>document.getElementById(id);if(el('tourStatCount'))el('tourStatCount').textContent=tours.length;if(fv){const nvTot=tours.reduce((s,t)=>{let a=0;if(t.pic===fv)a+=t.tienPIC;if(t.bs===fv)a+=t.tienBS;return s+a;},0);if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(nvTot);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng NV Này';}}else{if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(totalPIC+totalBS);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng Cộng';}};const sums={};tours.forEach(t=>{[{id:t.pic,amt:t.tienPIC},{id:t.bs,amt:t.tienBS}].forEach(x=>{if(x.id){sums[x.id]=(sums[x.id]||0)+x.amt;}});});const inl=el('tourSummaryInline');if(inl)inl.innerHTML=Object.entries(sums).map(([id,total])=>`<span class="badge badge-blue" style="font-size:13px;padding:4px 10px">${getNVName(id)}: <strong>${fmt(total)}</strong></span>`).join('');}
+function renderTourTable(){const body=document.getElementById('tourBody');if(!body)return;const mk=getMonth().key;const flt=document.getElementById('tourNVFilter');const fv=flt?flt.value:'';let tours=DB.tours.filter(t=>t.monthKey===mk);if(fv)tours=tours.filter(t=>t.pic===fv||t.ktv===fv||t.bs===fv);body.innerHTML=tours.map(t=>`<tr><td>${t.ngay}</td><td>${t.khach}</td><td>${t.dichvu}</td><td>${getNVName(t.pic)}</td><td>${getNVName(t.bs)}</td><td class="amount">${fmt(t.tienPIC)}</td><td class="amount">${fmt(t.tienBS)}</td><td>${t.ghichu||''}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editTour('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTour('${t.id}')">🗑️</button></td></tr>`).join('');const totalPIC=tours.reduce((s,t)=>s+t.tienPIC,0);const totalBS=tours.reduce((s,t)=>s+t.tienBS,0);const el=id=>document.getElementById(id);if(el('tourStatCount'))el('tourStatCount').textContent=tours.length;if(fv){const nvTot=tours.reduce((s,t)=>{let a=0;if(t.pic===fv)a+=t.tienPIC;if(t.bs===fv)a+=t.tienBS;return s+a;},0);if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(nvTot);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng NV Này';}}else{if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(totalPIC+totalBS);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng Cộng';}};const sums={};tours.forEach(t=>{[{id:t.pic,amt:t.tienPIC},{id:t.bs,amt:t.tienBS}].forEach(x=>{if(x.id){sums[x.id]=(sums[x.id]||0)+x.amt;}});});const inl=el('tourSummaryInline');if(inl)inl.innerHTML=Object.entries(sums).map(([id,total])=>`<span class="badge badge-blue" style="font-size:13px;padding:4px 10px">${getNVName(id)}: <strong>${fmt(total)}</strong></span>`).join('');}
 function saveTour(){const id=document.getElementById('tourId').value;const data={monthKey:getMonth().key,ngay:document.getElementById('tourNgay').value,khach:document.getElementById('tourKhach').value,dichvu:document.getElementById('tourDichVu').value,pic:document.getElementById('tourPIC').value,tienPIC:+document.getElementById('tourTienPIC').value||0,ktv:document.getElementById('tourKTV').value,tienKTV:+document.getElementById('tourTienKTV').value||0,bs:document.getElementById('tourBS').value,tienBS:+document.getElementById('tourTienBS').value||0,ghichu:document.getElementById('tourGhiChu').value};if(id){const t=DB.tours.find(x=>x.id===id);Object.assign(t,data);}else{data.id=genId();DB.tours.push(data);}DB.save('tours');const mk=data.monthKey;[data.pic,data.ktv,data.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});closeModal('modalTour');refreshPage();showToast('Đã lưu tour!');}
 function editTour(id){const t=DB.tours.find(x=>x.id===id);if(!t)return;document.getElementById('tourId').value=t.id;document.getElementById('tourNgay').value=t.ngay;document.getElementById('tourKhach').value=t.khach;document.getElementById('tourDichVu').value=t.dichvu;document.getElementById('tourPIC').value=t.pic;document.getElementById('tourTienPIC').value=t.tienPIC;document.getElementById('tourKTV').value=t.ktv;document.getElementById('tourTienKTV').value=t.tienKTV;document.getElementById('tourBS').value=t.bs;document.getElementById('tourTienBS').value=t.tienBS;document.getElementById('tourGhiChu').value=t.ghichu;openModal('modalTour');}
 function deleteTour(id){if(!confirm('Xóa tour này?'))return;const t=DB.tours.find(x=>x.id===id);if(t){const mk=t.monthKey;[t.pic,t.ktv,t.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});}DB.tours=DB.tours.filter(t=>t.id!==id);DB.save('tours');refreshPage();showToast('Đã xóa!');}
@@ -101,7 +101,7 @@ function renderKPITab(){
   const hHH=isTele?'Đơn Giá/KH':'% HH';
   const totalLabel=isTele?totalDS+' người':fmt(totalDS);
 
-  container.innerHTML='<div class="kpi-dept-card"><div class="kpi-dept-header"><span>'+pbLabel(pb)+' – '+vt+'</span><span class="kpi-total-badge">Tổng: '+totalLabel+' | KPI: '+fmt(totalKPI)+'</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Nhân Viên</th><th>'+hDSAp+'</th><th>'+hDSThuc+'</th><th>% Đạt</th><th>'+hHH+'</th><th>Tiền KPI</th><th>Phạt</th><th>Ghi Chú</th><th>Thao Tác</th></tr></thead><tbody>'+kpis.map(k=>{
+  container.innerHTML='<div class="kpi-dept-card"><div class="kpi-dept-header"><span>'+pbLabel(pb)+' – '+vt+'</span><span class="kpi-total-badge">Tổng: '+totalLabel+' | KPI: '+fmt(totalKPI)+'</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Nhân Viên</th><th>'+hDSAp+'</th><th>'+hDSThuc+'</th><th>% Đạt</th><th>'+hHH+'</th><th>Tiền KPI</th><th>Phạt</th><th>Ghi Chú</th><th class="viewer-hide">Thao Tác</th></tr></thead><tbody>'+kpis.map(k=>{
     const pct=k.dsap?((k.dsthuc/k.dsap)*100).toFixed(1):0;
     const kpiAmt=calcKPIAmt(k);
     const dsApStr=isTele?k.dsap+' người':fmt(k.dsap);
@@ -114,7 +114,7 @@ function renderKPITab(){
     } else {
       hhStr=k.hoahong+'%';
     }
-    return '<tr><td><strong>'+getNVName(k.nvId)+'</strong></td><td>'+dsApStr+'</td><td class="amount">'+dsThucStr+'</td><td><span class="badge '+(+pct>=100?'badge-green':'badge-orange')+'">'+pct+'%</span></td><td>'+hhStr+'</td><td class="amount-blue">'+fmt(kpiAmt)+'</td><td class="amount-red">'+fmt(k.phat)+'</td><td>'+(k.ghichu||'')+'</td><td><button class="btn btn-sm btn-secondary" onclick="editKPI(\''+k.id+'\')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteKPI(\''+k.id+'\')">🗑️</button></td></tr>';
+    return '<tr><td><strong>'+getNVName(k.nvId)+'</strong></td><td>'+dsApStr+'</td><td class="amount">'+dsThucStr+'</td><td><span class="badge '+(+pct>=100?'badge-green':'badge-orange')+'">'+pct+'%</span></td><td>'+hhStr+'</td><td class="amount-blue">'+fmt(kpiAmt)+'</td><td class="amount-red">'+fmt(k.phat)+'</td><td>'+(k.ghichu||'')+'</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editKPI(\''+k.id+'\')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteKPI(\''+k.id+'\')">🗑️</button></td></tr>';
   }).join('')+'</tbody></table></div></div>';
 }
 function saveKPI(){const id=document.getElementById('kpiId').value;const data={nvId:document.getElementById('kpiNV').value,monthKey:getMonth().key,vaitro:document.getElementById('kpiVaiTro').value,dsap:+document.getElementById('kpiDSAp').value||0,dsthuc:+document.getElementById('kpiDSThuc').value||0,hoahong:+document.getElementById('kpiHoaHong').value||0,phat:+document.getElementById('kpiPhat').value||0,ghichu:document.getElementById('kpiGhiChu').value};if(id){const k=DB.kpis.find(x=>x.id===id);Object.assign(k,data);}else{data.id=genId();DB.kpis.push(data);}DB.save('kpis');closeModal('modalKPI');refreshPage();showToast('Đã lưu KPI!');}
@@ -239,7 +239,7 @@ function calcAllSalary(){
       '<td class="amount-red">'+fmt(s.trukhac)+'</td>'+
       '<td class="amount-red">'+fmt(s.ungluong)+'</td>'+
       '<td class="amount" style="font-size:14px;font-weight:700">'+fmt(s.thuclinh)+'</td>'+
-      '<td><button class="btn btn-sm btn-secondary" onclick="editKhauTru(\''+nv.id+'\')">✏️</button></td>'+
+      '<td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editKhauTru(\''+nv.id+'\')">✏️</button></td>'+
       '</tr>';
   }).join('');
 
@@ -407,7 +407,7 @@ function renderKTPage(){
       '<td class="amount-red" style="font-weight:700">'+fmt(k.sotien)+'</td>'+
       '<td>'+(k.loai==='ungluong'?(k.lanUng?'Lần '+k.lanUng:''):'–')+'</td>'+
       '<td>'+(k.ghichu||'')+'</td>'+
-      '<td><button class="btn btn-sm btn-secondary" onclick="editKT(\''+k.id+'\')">✏️</button> '+
+      '<td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editKT(\''+k.id+'\')">✏️</button> '+
       '<button class="btn btn-sm btn-danger" onclick="deleteKT(\''+k.id+'\')">🗑️</button></td>'+
       '</tr>';
   }).join(''):'<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">Chưa có khấu trừ nào trong tháng này</td></tr>';
@@ -1478,6 +1478,8 @@ function renderSchedules(){
       DB.calamviec.push({...def});
     }
   });
+  const isViewer = sessionStorage.getItem('currentUserRole') === 'viewer';
+  const disAttr = isViewer ? 'disabled' : '';
   const colors = {PTV:'accent-blue', PDV:'accent-green', Tele:'accent-purple', 'Khác':'accent-orange'};
   container.innerHTML = DB.calamviec.map((s, idx) => {
     const c = colors[s.phongban] || 'accent-blue';
@@ -1490,27 +1492,27 @@ function renderSchedules(){
       <div class="form-grid" style="grid-template-columns:repeat(3,1fr);gap:12px">
         <div class="form-group">
           <label>Giờ Vào</label>
-          <input type="time" id="sch_giovao_${idx}" value="${s.giovao||'08:00'}" />
+          <input type="time" id="sch_giovao_${idx}" value="${s.giovao||'08:00'}" ${disAttr} />
         </div>
         <div class="form-group">
           <label>Giờ Ra</label>
-          <input type="time" id="sch_giora_${idx}" value="${s.giora||'17:30'}" />
+          <input type="time" id="sch_giora_${idx}" value="${s.giora||'17:30'}" ${disAttr} />
         </div>
         <div class="form-group">
           <label>Tolerance (phút)</label>
-          <input type="number" id="sch_tolerance_${idx}" value="${s.tolerance||0}" min="0" placeholder="5" />
+          <input type="number" id="sch_tolerance_${idx}" value="${s.tolerance||0}" min="0" placeholder="5" ${disAttr} />
         </div>
         <div class="form-group">
           <label>Nghỉ Trưa Bắt Đầu</label>
-          <input type="time" id="sch_ntbat_${idx}" value="${s.nghitrua_bat||'12:00'}" />
+          <input type="time" id="sch_ntbat_${idx}" value="${s.nghitrua_bat||'12:00'}" ${disAttr} />
         </div>
         <div class="form-group">
           <label>Nghỉ Trưa Kết Thúc</label>
-          <input type="time" id="sch_ntket_${idx}" value="${s.nghitrua_ket||'13:30'}" />
+          <input type="time" id="sch_ntket_${idx}" value="${s.nghitrua_ket||'13:30'}" ${disAttr} />
         </div>
         <div class="form-group">
           <label>Phạt trễ (đ/phút)</label>
-          <input type="number" id="sch_phat_${idx}" value="${s.phatPerMin||0}" min="0" placeholder="0" />
+          <input type="number" id="sch_phat_${idx}" value="${s.phatPerMin||0}" min="0" placeholder="0" ${disAttr} />
         </div>
       </div>
     </div>`;
@@ -3265,6 +3267,12 @@ function updateSyncStatus(status, text) {
 }
 
 async function syncCloudUpload(isAuto = false) {
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  if (role === 'viewer') {
+    updateSyncStatus('error', 'Lỗi đồng bộ');
+    if (!isAuto) showToast('Tài khoản Viewer không có quyền tải dữ liệu lên!', 'error');
+    return;
+  }
   updateSyncStatus('syncing', 'Đang lưu...');
   const url = localStorage.getItem('spa2_sync_google_url') || DEFAULT_SYNC_URL;
   if (!url) {
@@ -3475,6 +3483,227 @@ window.addEventListener('focus', () => {
   }
   syncCloudDownload(true);
 });
+
+// === USER AUTHENTICATION & PERMISSIONS ===
+
+function applyUserPermissions() {
+  const user = sessionStorage.getItem('currentUser');
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  const displayName = sessionStorage.getItem('currentDisplayName');
+  
+  const loginOverlay = document.getElementById('loginOverlay');
+  if (!user) {
+    if (loginOverlay) loginOverlay.style.display = 'flex';
+    document.body.className = 'role-viewer';
+    return;
+  }
+  
+  if (loginOverlay) loginOverlay.style.display = 'none';
+  
+  const nameEl = document.getElementById('currentUserName');
+  if (nameEl) nameEl.textContent = displayName || user;
+  
+  document.body.classList.remove('role-admin', 'role-editor', 'role-viewer');
+  document.body.classList.add('role-' + role);
+  
+  const cardUser = document.getElementById('cardUserManagement');
+  if (cardUser) {
+    cardUser.style.display = (role === 'admin') ? 'block' : 'none';
+  }
+}
+
+function handleLogin(e) {
+  if (e) e.preventDefault();
+  const userInp = document.getElementById('loginUser').value.trim();
+  const passInp = document.getElementById('loginPass').value.trim();
+  
+  if (!DB.settings.users) {
+    DB.settings.users = [
+      { id: 'usr_admin', username: 'admin', password: '791522Mm', name: 'Quản trị viên', role: 'admin' }
+    ];
+    DB.save('settings');
+  }
+  
+  const user = DB.settings.users.find(u => u.username === userInp && u.password === passInp);
+  if (!user) {
+    showToast('Tên đăng nhập hoặc mật khẩu không chính xác!', 'error');
+    return;
+  }
+  
+  sessionStorage.setItem('currentUser', user.username);
+  sessionStorage.setItem('currentUserRole', user.role);
+  sessionStorage.setItem('currentDisplayName', user.name);
+  
+  applyUserPermissions();
+  refreshPage();
+  showToast('Đăng nhập thành công!', 'success');
+  addLog('Đăng nhập hệ thống', 'success');
+}
+
+function handleLogout() {
+  sessionStorage.removeItem('currentUser');
+  sessionStorage.removeItem('currentUserRole');
+  sessionStorage.removeItem('currentDisplayName');
+  window.location.reload();
+}
+
+// === USER MANAGEMENT CRUD ===
+
+function renderUserTable() {
+  const body = document.getElementById('userTableBody');
+  if (!body) return;
+  
+  if (!DB.settings.users) {
+    DB.settings.users = [
+      { id: 'usr_admin', username: 'admin', password: '791522Mm', name: 'Quản trị viên', role: 'admin' }
+    ];
+    DB.save('settings');
+  }
+  
+  const users = DB.settings.users;
+  const roleLabels = { admin: 'Admin', editor: 'Editor', viewer: 'Viewer' };
+  
+  body.innerHTML = users.map(u => {
+    const isPrimaryAdmin = (u.username === 'admin');
+    const deleteBtn = isPrimaryAdmin 
+      ? '' 
+      : `<button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">🗑️</button>`;
+    
+    return `<tr>
+      <td><strong>${u.username}</strong></td>
+      <td>${u.name}</td>
+      <td><span class="user-role-badge ${u.role}">${roleLabels[u.role] || u.role}</span></td>
+      <td class="viewer-hide">
+        <button class="btn btn-sm btn-secondary" onclick="openUserModal('${u.id}')">✏️</button>
+        ${deleteBtn}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openUserModal(id) {
+  const title = document.getElementById('userModalTitle');
+  const formId = document.getElementById('userFormId');
+  const usernameInput = document.getElementById('userFormUsername');
+  const passwordInput = document.getElementById('userFormPassword');
+  const nameInput = document.getElementById('userFormName');
+  const roleSelect = document.getElementById('userFormRole');
+  
+  if (id) {
+    const user = DB.settings.users.find(u => u.id === id);
+    if (!user) return;
+    
+    title.textContent = 'Sửa Tài Khoản';
+    formId.value = user.id;
+    usernameInput.value = user.username;
+    passwordInput.value = user.password;
+    nameInput.value = user.name;
+    roleSelect.value = user.role;
+    
+    if (user.username === 'admin') {
+      usernameInput.disabled = true;
+      roleSelect.disabled = true;
+    } else {
+      usernameInput.disabled = false;
+      roleSelect.disabled = false;
+    }
+  } else {
+    title.textContent = 'Thêm Tài Khoản';
+    formId.value = '';
+    usernameInput.value = '';
+    passwordInput.value = '';
+    nameInput.value = '';
+    roleSelect.value = 'viewer';
+    
+    usernameInput.disabled = false;
+    roleSelect.disabled = false;
+  }
+  
+  openModal('modalUserForm');
+}
+
+function saveUser(e) {
+  if (e) e.preventDefault();
+  
+  const id = document.getElementById('userFormId').value;
+  const username = document.getElementById('userFormUsername').value.trim().toLowerCase();
+  const password = document.getElementById('userFormPassword').value.trim();
+  const name = document.getElementById('userFormName').value.trim();
+  const role = document.getElementById('userFormRole').value;
+  
+  if (!username || !password || !name) {
+    showToast('Vui lòng điền đầy đủ thông tin!', 'error');
+    return;
+  }
+  
+  if (!DB.settings.users) {
+    DB.settings.users = [];
+  }
+  
+  // Check duplicate username
+  const dup = DB.settings.users.find(u => u.username === username && u.id !== id);
+  if (dup) {
+    showToast('Tên đăng nhập đã tồn tại!', 'error');
+    return;
+  }
+  
+  if (id) {
+    const user = DB.settings.users.find(u => u.id === id);
+    if (user) {
+      const oldUsername = user.username;
+      user.username = username;
+      user.password = password;
+      user.name = name;
+      user.role = role;
+      
+      // Update session if currently logged in user edited themselves
+      if (oldUsername === sessionStorage.getItem('currentUser')) {
+        sessionStorage.setItem('currentUser', username);
+        sessionStorage.setItem('currentUserRole', role);
+        sessionStorage.setItem('currentDisplayName', name);
+      }
+    }
+  } else {
+    const newUser = {
+      id: 'usr_' + Date.now().toString(36),
+      username,
+      password,
+      name,
+      role
+    };
+    DB.settings.users.push(newUser);
+  }
+  
+  DB.save('settings');
+  closeModal('modalUserForm');
+  refreshPage();
+  showToast('Đã lưu tài khoản người dùng!', 'success');
+  addLog((id ? 'Cập nhật' : 'Thêm') + ' tài khoản người dùng: ' + username, 'success');
+}
+
+function deleteUser(id) {
+  const user = DB.settings.users.find(u => u.id === id);
+  if (!user) return;
+  
+  if (user.username === 'admin') {
+    showToast('Không thể xóa tài khoản admin mặc định!', 'error');
+    return;
+  }
+  
+  if (user.username === sessionStorage.getItem('currentUser')) {
+    showToast('Không thể tự xóa tài khoản của chính mình!', 'error');
+    return;
+  }
+  
+  if (!confirm('Bạn có chắc chắn muốn xóa tài khoản ' + user.username + '?')) return;
+  
+  DB.settings.users = DB.settings.users.filter(u => u.id !== id);
+  DB.save('settings');
+  
+  refreshPage();
+  showToast('Đã xóa tài khoản!', 'success');
+  addLog('Xóa tài khoản người dùng: ' + user.username, 'warning');
+}
 
 // === BOOT ===
 initDefaultSchedules();
