@@ -193,6 +193,7 @@ function badgeFor(status) {
     'Chính thức': '<span class="badge badge-green">Chính thức</span>',
     'Thử việc': '<span class="badge badge-orange">Thử việc</span>',
     'Parttime': '<span class="badge badge-blue">Parttime</span>',
+    'Đã nghỉ việc': '<span class="badge badge-red">Đã nghỉ việc</span>',
   };
   return map[status] || '<span class="badge badge-gray">' + status + '</span>';
 }
