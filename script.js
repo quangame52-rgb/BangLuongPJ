@@ -1,19 +1,19 @@
 // === INIT ===
 DB.load(); initSampleData();
 let currentPage='dashboard', kpiTab='ptv', charts={};
-function switchPage(p){currentPage=p;document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.page===p)});document.getElementById('topbarTitle').textContent={dashboard:'Dashboard',nhanvien:'Nhân Viên',chamcong:'Chấm Công',tour:'Tour Dịch Vụ',kpi:'KPI Doanh Số',luong:'Bảng Lương',khautru:'Khấu Trừ',phucap:'Phụ Cấp & Thưởng',baocao:'Báo Cáo',caidat:'Cài Đặt',nhatky:'Nhật Ký'}[p]||p;if(p==='nhatky'){const b=document.getElementById('logBadge');if(b)b.style.display='none';}const sidebar=document.getElementById('sidebar');if(sidebar)sidebar.classList.remove('open');refreshPage();}
+function switchPage(p){if(p==='nhatky'){const role=sessionStorage.getItem('currentUserRole')||'viewer';if(role!=='admin'){showToast('Chỉ quản trị viên mới có quyền xem nhật ký!','error');return;}}currentPage=p;document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.page===p)});document.getElementById('topbarTitle').textContent={dashboard:'Dashboard',nhanvien:'Nhân Viên',chamcong:'Chấm Công',lichoff:'Lịch Off',tour:'Tour Dịch Vụ',kpi:'KPI Doanh Số',luong:'Bảng Lương',khautru:'Khấu Trừ',phucap:'Phụ Cấp & Thưởng',baocao:'Báo Cáo',caidat:'Cài Đặt',nhatky:'Nhật Ký'}[p]||p;if(p==='nhatky'){const b=document.getElementById('logBadge');if(b)b.style.display='none';}const sidebar=document.getElementById('sidebar');if(sidebar)sidebar.classList.remove('open');refreshPage();}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
-function onMonthChange(){const m=getMonth();['dashMonthBadge','ccMonthBadge','tourMonthBadge','kpiMonthBadge','luongMonthBadge','ktMonthBadge','pcMonthBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=m.label;});const sidebar=document.getElementById('sidebar');if(sidebar)sidebar.classList.remove('open');refreshPage();}
-function refreshPage(){applyUserPermissions();loadSyncUrl();renderNVTable();renderCCTable();renderTourTable();renderKPITab();calcAllSalary();renderDashboard();renderBaoCao();renderKTPage();renderPhucapPage();loadMonthConfig();populateSelects();renderSchedules();renderLogs();renderUserTable();}
+function onMonthChange(){const m=getMonth();const firstDay=new Date(m.year,m.month-1,1);currentWeekStart=getMonday(firstDay);['dashMonthBadge','ccMonthBadge','tourMonthBadge','kpiMonthBadge','luongMonthBadge','ktMonthBadge','pcMonthBadge','loMonthBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=m.label;});const sidebar=document.getElementById('sidebar');if(sidebar)sidebar.classList.remove('open');refreshPage();}
+function refreshPage(){applyUserPermissions();loadSyncUrl();const m=getMonth();['dashMonthBadge','ccMonthBadge','tourMonthBadge','kpiMonthBadge','luongMonthBadge','ktMonthBadge','pcMonthBadge','loMonthBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=m.label;});renderNVTable();renderCCTable();renderTourTable();renderKPITab();calcAllSalary();renderDashboard();renderBaoCao();renderKTPage();renderPhucapPage();renderLichOffPage();loadMonthConfig();populateSelects();renderSchedules();renderLogs();renderUserTable();}
 let appLogs = JSON.parse(localStorage.getItem('spa_logs')||'[]');
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3500);addLog(msg,type);}
 function addLog(msg,type='info',details=''){const user = sessionStorage.getItem('currentUser') || 'Hệ thống'; const finalMsg = /^\[.+?\]\s/.test(msg) ? msg : `[${user}] ${msg}`; appLogs.unshift({msg:finalMsg,type,details,time:new Date().toLocaleString('vi-VN')});if(appLogs.length>200)appLogs=appLogs.slice(0,200);localStorage.setItem('spa_logs',JSON.stringify(appLogs));if(currentPage!=='nhatky'){const b=document.getElementById('logBadge');if(b){const errCnt=appLogs.filter(l=>l.type==='error').length;if(errCnt>0){b.textContent=errCnt;b.style.display='inline-flex';}}}renderLogs();}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function populateSelects(){const nvsActive=DB.nhanvien.filter(n=>n.trangthai!=='Đã nghỉ việc');const nvsAll=DB.nhanvien;const optsActive=nvsActive.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');const optsAll=nvsAll.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');['ccNV','kpiNV'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=optsActive;});const optsBlankActive='<option value="">-- Chọn --</option>'+optsActive;['tourPIC','tourKTV','tourBS','tourNVFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=(id==='tourNVFilter'?'<option value="">-- Tất cả nhân viên --</option>'+optsAll:optsBlankActive);});}
+function populateSelects(){const nvsActive=DB.nhanvien.filter(n=>n.trangthai!=='Đã nghỉ việc');const nvsAll=DB.nhanvien;const optsActive=nvsActive.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');const optsAll=nvsAll.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');['ccNV','kpiNV','loNvId'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=optsActive;});const optsBlankActive='<option value="">-- Chọn --</option>'+optsActive;['tourPIC','tourKTV','tourBS','tourNVFilter','loNVFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=(['tourNVFilter','loNVFilter'].includes(id)?'<option value="">-- Tất cả nhân viên --</option>'+optsAll:optsBlankActive);});}
 
 // === NV TABLE ===
-function renderNVTable(filter=''){const body=document.getElementById('nvBody');if(!body)return;const nvs=DB.nhanvien.filter(n=>!filter||n.name.toLowerCase().includes(filter.toLowerCase())||(n.manv&&n.manv.includes(filter)));body.innerHTML=nvs.map((n,i)=>`<tr><td>${i+1}</td><td><span class="badge badge-purple">${n.manv||'-'}</span></td><td><strong>${n.name}</strong></td><td>${n.chucvu}</td><td>${pbLabel(n.phongban)}</td><td>${badgeFor(n.trangthai)}</td><td>${n.lichoff||'—'}</td><td class="amount">${fmt(n.luongcb)}</td><td>${n.ngaycongchuan}</td><td class="amount">${n.kyquy?fmt(n.kyquy):"-"}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editNV('${n.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteNV('${n.id}')">🗑️</button></td></tr>`).join('');}
+function renderNVTable(filter=''){const body=document.getElementById('nvBody');if(!body)return;const nvs=DB.nhanvien.filter(n=>!filter||n.name.toLowerCase().includes(filter.toLowerCase())||(n.manv&&n.manv.includes(filter)));body.innerHTML=nvs.map((n,i)=>`<tr><td>${i+1}</td><td><span class="badge badge-purple">${n.manv||'-'}</span></td><td><strong>${n.name}</strong></td><td>${n.chucvu}</td><td>${pbLabel(n.phongban)}</td><td>${badgeFor(n.trangthai)}</td><td class="amount">${fmt(n.luongcb)}</td><td>${n.ngaycongchuan}</td><td class="amount">${n.kyquy?fmt(n.kyquy):"-"}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editNV('${n.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteNV('${n.id}')">🗑️</button></td></tr>`).join('');}
 function filterNV(v){renderNVTable(v);}
 // === BULK EDIT ===
 function openBulkEdit(){
@@ -54,24 +54,334 @@ function applyBulkEdit(){
   closeModal('modalBulkEdit');
   refreshPage();
   showToast('Đã cập nhật '+nvs.length+' nhân viên!');
+  addLog('Cập nhật hàng loạt ' + labels[field] + ' thành ' + newVal + ' cho ' + nvs.length + ' nhân viên' + (filter ? ' phòng ' + filter : ''), 'success');
 }
-function addNV(){document.getElementById('nvId').value='';document.getElementById('nvMaNV').value='';document.getElementById('nvHoTen').value='';document.getElementById('nvChucVu').selectedIndex=0;document.getElementById('nvPhongBan').selectedIndex=0;document.getElementById('nvTrangThai').selectedIndex=0;document.getElementById('nvLichOff').value='';document.getElementById('nvLuongCB').value='';document.getElementById('nvNgayCongChuan').value='26';document.getElementById('nvGioCongChuan').value='9';document.getElementById('nvPCTrachNhiem').value='0';document.getElementById('nvKyQuy').value='0';document.getElementById('modalNVTitle').textContent='Thêm Nhân Viên';openModal('modalNV');}
-function saveNV(){const id=document.getElementById('nvId').value;const data={manv:(document.getElementById('nvMaNV').value||'').trim(),name:document.getElementById('nvHoTen').value,chucvu:document.getElementById('nvChucVu').value,phongban:document.getElementById('nvPhongBan').value,trangthai:document.getElementById('nvTrangThai').value,lichoff:document.getElementById('nvLichOff').value,luongcb:+document.getElementById('nvLuongCB').value||0,ngaycongchuan:+document.getElementById('nvNgayCongChuan').value||26,giocongchuan:+document.getElementById('nvGioCongChuan').value||9,pctrachnhiem:+document.getElementById('nvPCTrachNhiem').value||0,kyquy:+document.getElementById('nvKyQuy').value||0};if(!data.name){showToast('Vui lòng nhập họ tên!','error');return;}if(id){const nv=getNV(id);Object.assign(nv,data);}else{data.id=genId();DB.nhanvien.push(data);}DB.save('nhanvien');closeModal('modalNV');refreshPage();showToast(id?'Đã cập nhật!':'Đã thêm nhân viên!');}
-function editNV(id){const n=getNV(id);if(!n)return;document.getElementById('nvId').value=n.id;document.getElementById('nvMaNV').value=n.manv||'';document.getElementById('nvHoTen').value=n.name;document.getElementById('nvChucVu').value=n.chucvu;document.getElementById('nvPhongBan').value=n.phongban;document.getElementById('nvTrangThai').value=n.trangthai;document.getElementById('nvLichOff').value=n.lichoff||'';document.getElementById('nvLuongCB').value=n.luongcb;document.getElementById('nvNgayCongChuan').value=n.ngaycongchuan;document.getElementById('nvGioCongChuan').value=n.giocongchuan||9;document.getElementById('nvPCTrachNhiem').value=n.pctrachnhiem||0;document.getElementById('nvKyQuy').value=n.kyquy||0;document.getElementById('modalNVTitle').textContent='Sửa Nhân Viên';openModal('modalNV');}
-function deleteNV(id){if(!confirm('Xóa nhân viên này?'))return;DB.nhanvien=DB.nhanvien.filter(n=>n.id!==id);DB.save('nhanvien');refreshPage();showToast('Đã xóa!');}
+function addNV(){document.getElementById('nvId').value='';document.getElementById('nvMaNV').value='';document.getElementById('nvHoTen').value='';document.getElementById('nvChucVu').selectedIndex=0;document.getElementById('nvPhongBan').selectedIndex=0;document.getElementById('nvTrangThai').selectedIndex=0;document.getElementById('nvLuongCB').value='';document.getElementById('nvNgayCongChuan').value='26';document.getElementById('nvGioCongChuan').value='9';document.getElementById('nvPCTrachNhiem').value='0';document.getElementById('nvKyQuy').value='0';document.getElementById('modalNVTitle').textContent='Thêm Nhân Viên';openModal('modalNV');}
+function saveNV(){const id=document.getElementById('nvId').value;const data={manv:(document.getElementById('nvMaNV').value||'').trim(),name:document.getElementById('nvHoTen').value,chucvu:document.getElementById('nvChucVu').value,phongban:document.getElementById('nvPhongBan').value,trangthai:document.getElementById('nvTrangThai').value,luongcb:+document.getElementById('nvLuongCB').value||0,ngaycongchuan:+document.getElementById('nvNgayCongChuan').value||26,giocongchuan:+document.getElementById('nvGioCongChuan').value||9,pctrachnhiem:+document.getElementById('nvPCTrachNhiem').value||0,kyquy:+document.getElementById('nvKyQuy').value||0};if(!data.name){showToast('Vui lòng nhập họ tên!','error');return;}if(id){const nv=getNV(id);Object.assign(nv,data);}else{data.id=genId();DB.nhanvien.push(data);}DB.save('nhanvien');closeModal('modalNV');refreshPage();showToast(id?'Đã cập nhật!':'Đã thêm nhân viên!');addLog((id ? 'Cập nhật' : 'Thêm') + ' nhân viên: ' + data.name, 'success');}
+function editNV(id){const n=getNV(id);if(!n)return;document.getElementById('nvId').value=n.id;document.getElementById('nvMaNV').value=n.manv||'';document.getElementById('nvHoTen').value=n.name;document.getElementById('nvChucVu').value=n.chucvu;document.getElementById('nvPhongBan').value=n.phongban;document.getElementById('nvTrangThai').value=n.trangthai;document.getElementById('nvLuongCB').value=n.luongcb;document.getElementById('nvNgayCongChuan').value=n.ngaycongchuan;document.getElementById('nvGioCongChuan').value=n.giocongchuan||9;document.getElementById('nvPCTrachNhiem').value=n.pctrachnhiem||0;document.getElementById('nvKyQuy').value=n.kyquy||0;document.getElementById('modalNVTitle').textContent='Sửa Nhân Viên';openModal('modalNV');}
+function deleteNV(id){const nv=getNV(id);if(!confirm('Xóa nhân viên này?'))return;DB.nhanvien=DB.nhanvien.filter(n=>n.id!==id);DB.save('nhanvien');refreshPage();showToast('Đã xóa!');addLog('Xóa nhân viên: ' + (nv ? nv.name : id), 'warning');}
 
 // === CC TABLE ===
 function renderCCTable(){const body=document.getElementById('ccBody');if(!body)return;const mk=getMonth().key;const ccs=DB.chamcong.filter(c=>c.monthKey===mk);body.innerHTML=ccs.map((c,i)=>{const nv=getNV(c.nvId);if(!nv)return '';const nc=c.ncc!==undefined?c.ncc:(nv.ngaycongchuan||26);const chucvu=c.chucvu||nv.chucvu;const nctl=(c.ngaycongtt||0)+(c.ngayle||0);return `<tr><td>${i+1}</td><td><strong>${nv.name}</strong></td><td>${chucvu}</td><td>${pbLabel(nv.phongban)}</td><td>${badgeFor(nv.trangthai)}</td><td>${c.ngaycongtt||0}</td><td style="color:#f59e0b;font-weight:700">${c.ngayle||0}</td><td style="font-weight:700">${nctl}</td><td>${c.ngaynghi||0}</td><td>${nc}</td><td style="color:var(--cyan)">${c.gioOT||0}</td><td>${c.ghichu||''}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editCC('${c.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteCC('${c.id}')">🗑️</button></td></tr>`;}).join('');}
-function saveCC(){const id=document.getElementById('ccId').value;const data={nvId:document.getElementById('ccNV').value,monthKey:getMonth().key,ngaycongtt:+document.getElementById('ccNgayCongTT').value||0,ngayle:+document.getElementById('ccNgayLe').value||0,ngaynghi:+document.getElementById('ccNgayNghi').value||0,gioOT:+document.getElementById('ccGioOT').value||0,ghichu:document.getElementById('ccGhiChu').value};if(id){const cc=DB.chamcong.find(c=>c.id===id);Object.assign(cc,data);}else{data.id=genId();DB.chamcong.push(data);}DB.save('chamcong');closeModal('modalCC');refreshPage();showToast('Đã lưu chấm công!');}
+function saveCC(){const id=document.getElementById('ccId').value;const data={nvId:document.getElementById('ccNV').value,monthKey:getMonth().key,ngaycongtt:+document.getElementById('ccNgayCongTT').value||0,ngayle:+document.getElementById('ccNgayLe').value||0,ngaynghi:+document.getElementById('ccNgayNghi').value||0,gioOT:+document.getElementById('ccGioOT').value||0,ghichu:document.getElementById('ccGhiChu').value};if(id){const cc=DB.chamcong.find(c=>c.id===id);Object.assign(cc,data);}else{data.id=genId();DB.chamcong.push(data);}DB.save('chamcong');closeModal('modalCC');refreshPage();showToast('Đã lưu chấm công!');addLog((id ? 'Cập nhật' : 'Nhập') + ' chấm công cho ' + getNVName(data.nvId) + ' (Tháng ' + getMonth().label + ')', 'success');}
 function editCC(id){const c=DB.chamcong.find(x=>x.id===id);if(!c)return;document.getElementById('ccId').value=c.id;document.getElementById('ccNV').value=c.nvId;document.getElementById('ccNgayCongTT').value=c.ngaycongtt;document.getElementById('ccNgayLe').value=c.ngayle||0;document.getElementById('ccNgayNghi').value=c.ngaynghi;document.getElementById('ccGioOT').value=c.gioOT||0;document.getElementById('ccGhiChu').value=c.ghichu;openModal('modalCC');}
-function deleteCC(id){if(!confirm('Xóa?'))return;DB.chamcong=DB.chamcong.filter(c=>c.id!==id);DB.save('chamcong');refreshPage();showToast('Đã xóa!');}
-function deleteAllCC(){const mk=getMonth().key;const count=DB.chamcong.filter(c=>c.monthKey===mk).length;if(!count){showToast('Không có dữ liệu chấm công!','error');return;}if(!confirm('Xóa toàn bộ '+count+' bản ghi chấm công tháng này?'))return;DB.chamcong=DB.chamcong.filter(c=>c.monthKey!==mk);DB.save('chamcong');refreshPage();showToast('Đã xóa '+count+' bản ghi chấm công!');}
+function deleteCC(id){const cc=DB.chamcong.find(c=>c.id===id);if(!confirm('Xóa?'))return;DB.chamcong=DB.chamcong.filter(c=>c.id!==id);DB.save('chamcong');refreshPage();showToast('Đã xóa!');if(cc)addLog('Xóa chấm công của ' + getNVName(cc.nvId) + ' (Tháng ' + getMonth().label + ')', 'warning');}
+function deleteAllCC(){const mk=getMonth().key;const count=DB.chamcong.filter(c=>c.monthKey===mk).length;if(!count){showToast('Không có dữ liệu chấm công!','error');return;}if(!confirm('Xóa toàn bộ '+count+' bản ghi chấm công tháng này?'))return;DB.chamcong=DB.chamcong.filter(c=>c.monthKey!==mk);DB.save('chamcong');refreshPage();showToast('Đã xóa '+count+' bản ghi chấm công!');addLog('Xóa toàn bộ ' + count + ' bản ghi chấm công tháng ' + mk, 'warning');}
+
+// === LỊCH OFF ===
+let currentWeekStart = getMonday(new Date());
+
+function getMonday(d) {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(date.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+function navigateWeek(dir) {
+  if (dir === 0) {
+    currentWeekStart = getMonday(new Date());
+  } else {
+    currentWeekStart.setDate(currentWeekStart.getDate() + dir * 7);
+  }
+  renderLichOffPage();
+}
+
+function openAddLichOff() {
+  document.getElementById('loId').value = '';
+  document.getElementById('loNvId').selectedIndex = 0;
+  const m = getMonth();
+  const today = new Date();
+  let defaultDateStr = today.toISOString().split('T')[0];
+  if (today.getMonth() + 1 !== m.month || today.getFullYear() !== m.year) {
+    const mStr = String(m.month).padStart(2, '0');
+    defaultDateStr = `${m.year}-${mStr}-01`;
+  }
+  document.getElementById('loNgay').value = defaultDateStr;
+  document.getElementById('loGhiChu').value = '';
+  document.getElementById('modalLichOffTitle').textContent = 'Thêm Lịch Off';
+  openModal('modalLichOff');
+}
+
+function editLichOff(id) {
+  const item = DB.lichoff.find(o => o.id === id);
+  if (!item) return;
+  document.getElementById('loId').value = item.id;
+  document.getElementById('loNvId').value = item.nvId;
+  document.getElementById('loNgay').value = item.ngay;
+  document.getElementById('loGhiChu').value = item.ghichu || '';
+  document.getElementById('modalLichOffTitle').textContent = 'Sửa Lịch Off';
+  openModal('modalLichOff');
+}
+
+function saveLichOff() {
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  if (role === 'viewer') {
+    showToast('Tài khoản Viewer không có quyền thực hiện thao tác này!', 'error');
+    return;
+  }
+
+  const id = document.getElementById('loId').value;
+  const nvId = document.getElementById('loNvId').value;
+  const ngay = document.getElementById('loNgay').value;
+  const ghichu = document.getElementById('loGhiChu').value.trim();
+
+  if (!nvId) {
+    showToast('Vui lòng chọn nhân viên!', 'error');
+    return;
+  }
+  if (!ngay) {
+    showToast('Vui lòng chọn ngày off!', 'error');
+    return;
+  }
+
+  const dup = DB.lichoff.find(o => o.nvId === nvId && o.ngay === ngay && o.id !== id);
+  if (dup) {
+    showToast('Nhân viên này đã được đăng ký off vào ngày ' + formatDate(ngay) + '!', 'error');
+    return;
+  }
+
+  const [y, mStr, d] = ngay.split('-');
+  const monthKey = `${parseInt(mStr)}-${y}`;
+  const data = { nvId, ngay, monthKey, ghichu };
+
+  if (id) {
+    const item = DB.lichoff.find(o => o.id === id);
+    if (item) Object.assign(item, data);
+  } else {
+    data.id = genId();
+    DB.lichoff.push(data);
+  }
+
+  DB.save('lichoff');
+  closeModal('modalLichOff');
+  refreshPage();
+  showToast(id ? 'Đã cập nhật lịch off!' : 'Đã thêm lịch off!');
+  addLog((id ? 'Cập nhật' : 'Thêm') + ' lịch off cho ' + getNVName(nvId) + ' ngày ' + formatDate(ngay), 'success');
+}
+
+function deleteLichOff(id) {
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  if (role === 'viewer') {
+    showToast('Tài khoản Viewer không có quyền thực hiện thao tác này!', 'error');
+    return;
+  }
+
+  const item = DB.lichoff.find(o => o.id === id);
+  if (!item) return;
+
+  if (!confirm('Bạn có chắc chắn muốn xóa lịch off của ' + getNVName(item.nvId) + ' ngày ' + formatDate(item.ngay) + '?')) return;
+
+  DB.lichoff = DB.lichoff.filter(o => o.id !== id);
+  DB.save('lichoff');
+  refreshPage();
+  showToast('Đã xóa lịch off!');
+  addLog('Xóa lịch off của ' + getNVName(item.nvId) + ' ngày ' + formatDate(item.ngay), 'warning');
+}
+
+function deleteAllLichOff() {
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  if (role === 'viewer') {
+    showToast('Tài khoản Viewer không có quyền thực hiện thao tác này!', 'error');
+    return;
+  }
+
+  const mk = getMonth().key;
+  const items = DB.lichoff.filter(o => o.monthKey === mk);
+  if (!items.length) {
+    showToast('Không có lịch off nào trong tháng này!', 'error');
+    return;
+  }
+
+  if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ ' + items.length + ' lịch off trong tháng này không?')) return;
+
+  DB.lichoff = DB.lichoff.filter(o => o.monthKey !== mk);
+  DB.save('lichoff');
+  refreshPage();
+  showToast('Đã xóa ' + items.length + ' lịch off!');
+  addLog('Xóa toàn bộ ' + items.length + ' lịch off của tháng ' + mk, 'warning');
+}
+
+function renderLichOffPage() {
+  const mk = getMonth().key;
+  const m = getMonth();
+  const badge = document.getElementById('loMonthBadge');
+  if (badge) badge.textContent = m.label;
+
+  const nvFilter = document.getElementById('loNVFilter')?.value;
+
+  // Calculate dates in the selected week
+  const daysOfWeek = [];
+  const start = new Date(currentWeekStart);
+  for (let i = 0; i < 7; i++) {
+    daysOfWeek.push(new Date(start));
+    start.setDate(start.getDate() + 1);
+  }
+
+  // Range Label e.g. "1 - 7 Th06 2026"
+  const dStart = daysOfWeek[0];
+  const dEnd = daysOfWeek[6];
+  let rangeLabel = '';
+  const pad = (num) => String(num).padStart(2, '0');
+  
+  if (dStart.getMonth() === dEnd.getMonth()) {
+    rangeLabel = `${dStart.getDate()} - ${dEnd.getDate()} Th${pad(dStart.getMonth() + 1)} ${dStart.getFullYear()}`;
+  } else {
+    const yearStr = dStart.getFullYear() === dEnd.getFullYear() ? ` ${dStart.getFullYear()}` : ` ${dStart.getFullYear()} - ${dEnd.getFullYear()}`;
+    rangeLabel = `${dStart.getDate()} Th${pad(dStart.getMonth() + 1)} - ${dEnd.getDate()} Th${pad(dEnd.getMonth() + 1)}${yearStr}`;
+  }
+  const labelEl = document.getElementById('loWeekRangeLabel');
+  if (labelEl) labelEl.textContent = rangeLabel;
+
+  // Render Table Head columns
+  const vnDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  const headRow = document.getElementById('loWeekTableHead');
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (headRow) {
+    let headHtml = `<th style="width: 220px; text-align: left; padding: 12px 16px;">Nhân viên</th>`;
+    daysOfWeek.forEach((d, idx) => {
+      const dateStr = d.toISOString().split('T')[0];
+      const isToday = (dateStr === todayStr);
+      const todayHeaderClass = isToday ? ' class="week-cell-today-header"' : '';
+      headHtml += `<th${todayHeaderClass} style="text-align: center; padding: 12px 8px; width: 100px;">${vnDays[idx]} ${d.getDate()}</th>`;
+    });
+    headRow.innerHTML = headHtml;
+  }
+
+  // Filter active employees
+  let employees = DB.nhanvien.filter(n => n.trangthai !== 'Đã nghỉ việc');
+  if (nvFilter) {
+    employees = employees.filter(n => n.id === nvFilter);
+  }
+  const totalNVEl = document.getElementById('loWeekTotalNV');
+  if (totalNVEl) totalNVEl.textContent = `Tổng cộng ${employees.length} Nhân viên`;
+
+  // Render Table Body rows
+  const bodyWeek = document.getElementById('loWeekTableBody');
+  if (bodyWeek) {
+    if (employees.length === 0) {
+      bodyWeek.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text2)">Không tìm thấy nhân viên nào</td></tr>`;
+    } else {
+      bodyWeek.innerHTML = employees.map(nv => {
+        let cellsHtml = '';
+        daysOfWeek.forEach((d, idx) => {
+          const dateStr = d.toISOString().split('T')[0];
+          const isToday = (dateStr === todayStr);
+          const isOff = DB.lichoff.some(o => o.nvId === nv.id && o.ngay === dateStr);
+          
+          let cellClasses = ['week-cell-clickable'];
+          if (isOff) cellClasses.push('week-cell-off');
+          if (isToday) cellClasses.push('week-cell-today');
+          const classAttr = cellClasses.length > 0 ? ` class="${cellClasses.join(' ')}"` : '';
+          
+          cellsHtml += `<td${classAttr} onclick="toggleWeekDayOff('${nv.id}', '${dateStr}')" style="text-align: center; padding: 12px 8px; font-size:13px; height: 42px;"></td>`;
+        });
+        
+        return `<tr>
+          <td style="padding: 12px 16px; font-weight:600; color:var(--text); text-align: left;">
+            ${nv.name} <small style="display:block; font-weight:normal; color:var(--text3); margin-top:2px;">${nv.chucvu} - ${pbLabel(nv.phongban)}</small>
+          </td>
+          ${cellsHtml}
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // Render monthly list table (at the bottom)
+  let items = DB.lichoff.filter(o => o.monthKey === mk);
+  if (nvFilter) {
+    items = items.filter(o => o.nvId === nvFilter);
+  }
+  items.sort((a, b) => b.ngay.localeCompare(a.ngay));
+
+  const allItems = DB.lichoff.filter(o => o.monthKey === mk);
+  const totalOffDays = allItems.length;
+  const uniqueNVIds = new Set(allItems.map(o => o.nvId));
+  const nvCount = uniqueNVIds.size;
+
+  const statTotal = document.getElementById('loStatTotal');
+  if (statTotal) statTotal.textContent = totalOffDays;
+  const statNVCount = document.getElementById('loStatNVCount');
+  if (statNVCount) statNVCount.textContent = nvCount;
+
+  const bodyDetails = document.getElementById('loBody');
+  if (bodyDetails) {
+    if (!items.length) {
+      bodyDetails.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">Chưa có lịch off nào trong tháng này</td></tr>';
+    } else {
+      bodyDetails.innerHTML = items.map((o, i) => {
+        const nv = getNV(o.nvId);
+        return `<tr>
+          <td>${i + 1}</td>
+          <td><strong>${formatDate(o.ngay)}</strong></td>
+          <td><strong>${nv ? nv.name : '?'}</strong></td>
+          <td>${nv ? pbLabel(nv.phongban) : '—'}</td>
+          <td>${o.ghichu || ''}</td>
+          <td class="viewer-hide">
+            <button class="btn btn-sm btn-secondary" onclick="editLichOff('${o.id}')">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteLichOff('${o.id}')">🗑️</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
+function toggleWeekDayOff(nvId, dateStr) {
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  if (role === 'viewer') {
+    showToast('Tài khoản Viewer không có quyền thực hiện thao tác này!', 'error');
+    return;
+  }
+
+  const idx = DB.lichoff.findIndex(o => o.nvId === nvId && o.ngay === dateStr);
+  if (idx >= 0) {
+    const item = DB.lichoff[idx];
+    if (!confirm(`Bạn có muốn xóa ngày nghỉ off ngày ${formatDate(dateStr)} của ${getNVName(nvId)} không?`)) return;
+    DB.lichoff.splice(idx, 1);
+    DB.save('lichoff');
+    refreshPage();
+    showToast('Đã xóa ngày nghỉ off!');
+    addLog(`Xóa lịch off của ${getNVName(nvId)} ngày ${formatDate(dateStr)}`, 'warning');
+  } else {
+    const id = genId();
+    const [y, mStr, d] = dateStr.split('-');
+    const monthKey = `${parseInt(mStr)}-${y}`;
+    DB.lichoff.push({ id, nvId, ngay: dateStr, monthKey, ghichu: '' });
+    DB.save('lichoff');
+    refreshPage();
+    showToast('Đã đặt ngày nghỉ off!');
+    addLog(`Thêm lịch off cho ${getNVName(nvId)} ngày ${formatDate(dateStr)}`, 'success');
+  }
+}
+
+function openAddCC() {
+  document.getElementById('ccId').value = '';
+  document.getElementById('ccNV').selectedIndex = 0;
+  document.getElementById('ccNgayCongTT').value = '';
+  document.getElementById('ccNgayLe').value = '0';
+  document.getElementById('ccNgayNghi').value = '';
+  document.getElementById('ccGioOT').value = '0';
+  document.getElementById('ccGhiChu').value = '';
+  document.getElementById('modalCC').classList.add('open');
+  onCCEmployeeChange();
+}
+
+function onCCEmployeeChange() {
+  const nvId = document.getElementById('ccNV').value;
+  if (!nvId) return;
+  const mk = getMonth().key;
+  const offCount = DB.lichoff.filter(o => o.nvId === nvId && o.monthKey === mk).length;
+  document.getElementById('ccNgayNghi').value = offCount;
+}
 
 // === TOUR ===
 function renderTourTable(){const body=document.getElementById('tourBody');if(!body)return;const mk=getMonth().key;const flt=document.getElementById('tourNVFilter');const fv=flt?flt.value:'';let tours=DB.tours.filter(t=>t.monthKey===mk);if(fv)tours=tours.filter(t=>t.pic===fv||t.ktv===fv||t.bs===fv);body.innerHTML=tours.map(t=>`<tr><td>${t.ngay}</td><td>${t.khach}</td><td>${t.dichvu}</td><td>${getNVName(t.pic)}</td><td>${getNVName(t.bs)}</td><td class="amount">${fmt(t.tienPIC)}</td><td class="amount">${fmt(t.tienBS)}</td><td>${t.ghichu||''}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editTour('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTour('${t.id}')">🗑️</button></td></tr>`).join('');const totalPIC=tours.reduce((s,t)=>s+t.tienPIC,0);const totalBS=tours.reduce((s,t)=>s+t.tienBS,0);const el=id=>document.getElementById(id);if(el('tourStatCount'))el('tourStatCount').textContent=tours.length;if(fv){const nvTot=tours.reduce((s,t)=>{let a=0;if(t.pic===fv)a+=t.tienPIC;if(t.bs===fv)a+=t.tienBS;return s+a;},0);if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(nvTot);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng NV Này';}}else{if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(totalPIC+totalBS);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng Cộng';}};const sums={};tours.forEach(t=>{[{id:t.pic,amt:t.tienPIC},{id:t.bs,amt:t.tienBS}].forEach(x=>{if(x.id){sums[x.id]=(sums[x.id]||0)+x.amt;}});});const inl=el('tourSummaryInline');if(inl)inl.innerHTML=Object.entries(sums).map(([id,total])=>`<span class="badge badge-blue" style="font-size:13px;padding:4px 10px">${getNVName(id)}: <strong>${fmt(total)}</strong></span>`).join('');}
-function saveTour(){const id=document.getElementById('tourId').value;const data={monthKey:getMonth().key,ngay:document.getElementById('tourNgay').value,khach:document.getElementById('tourKhach').value,dichvu:document.getElementById('tourDichVu').value,pic:document.getElementById('tourPIC').value,tienPIC:+document.getElementById('tourTienPIC').value||0,ktv:document.getElementById('tourKTV').value,tienKTV:+document.getElementById('tourTienKTV').value||0,bs:document.getElementById('tourBS').value,tienBS:+document.getElementById('tourTienBS').value||0,ghichu:document.getElementById('tourGhiChu').value};if(id){const t=DB.tours.find(x=>x.id===id);Object.assign(t,data);}else{data.id=genId();DB.tours.push(data);}DB.save('tours');const mk=data.monthKey;[data.pic,data.ktv,data.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});closeModal('modalTour');refreshPage();showToast('Đã lưu tour!');}
+function saveTour(){const id=document.getElementById('tourId').value;const data={monthKey:getMonth().key,ngay:document.getElementById('tourNgay').value,khach:document.getElementById('tourKhach').value,dichvu:document.getElementById('tourDichVu').value,pic:document.getElementById('tourPIC').value,tienPIC:+document.getElementById('tourTienPIC').value||0,ktv:document.getElementById('tourKTV').value,tienKTV:+document.getElementById('tourTienKTV').value||0,bs:document.getElementById('tourBS').value,tienBS:+document.getElementById('tourTienBS').value||0,ghichu:document.getElementById('tourGhiChu').value};if(id){const t=DB.tours.find(x=>x.id===id);Object.assign(t,data);}else{data.id=genId();DB.tours.push(data);}DB.save('tours');const mk=data.monthKey;[data.pic,data.ktv,data.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});closeModal('modalTour');refreshPage();showToast('Đã lưu tour!');addLog((id ? 'Cập nhật' : 'Thêm') + ' tour khách: ' + data.khach + ' - DV: ' + data.dichvu, 'success');}
 function editTour(id){const t=DB.tours.find(x=>x.id===id);if(!t)return;document.getElementById('tourId').value=t.id;document.getElementById('tourNgay').value=t.ngay;document.getElementById('tourKhach').value=t.khach;document.getElementById('tourDichVu').value=t.dichvu;document.getElementById('tourPIC').value=t.pic;document.getElementById('tourTienPIC').value=t.tienPIC;document.getElementById('tourKTV').value=t.ktv;document.getElementById('tourTienKTV').value=t.tienKTV;document.getElementById('tourBS').value=t.bs;document.getElementById('tourTienBS').value=t.tienBS;document.getElementById('tourGhiChu').value=t.ghichu;openModal('modalTour');}
-function deleteTour(id){if(!confirm('Xóa tour này?'))return;const t=DB.tours.find(x=>x.id===id);if(t){const mk=t.monthKey;[t.pic,t.ktv,t.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});}DB.tours=DB.tours.filter(t=>t.id!==id);DB.save('tours');refreshPage();showToast('Đã xóa!');}
+function deleteTour(id){if(!confirm('Xóa tour này?'))return;const t=DB.tours.find(x=>x.id===id);if(t){const mk=t.monthKey;[t.pic,t.ktv,t.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});addLog('Xóa tour khách: ' + t.khach + ' - DV: ' + t.dichvu, 'warning');}DB.tours=DB.tours.filter(t=>t.id!==id);DB.save('tours');refreshPage();showToast('Đã xóa!');}
 function deleteAllTours(){const mk=getMonth().key;const count=DB.tours.filter(t=>t.monthKey===mk).length;if(!count){showToast('Không có tour nào trong tháng này!','error');return;}if(!confirm('Xóa toàn bộ '+count+' tour tháng '+mk+'?\nHành động này không thể hoàn tác!'))return;DB.tours=DB.tours.filter(t=>t.monthKey!==mk);DB.save('tours');DB.chamcong.forEach(cc=>{if(cc.monthKey===mk)delete cc.tourAmt;});refreshPage();showToast('Đã xóa '+count+' tour!');addLog('Xóa toàn bộ '+count+' tour tháng '+mk,'warning');}
 
 // === KPI ===
@@ -117,9 +427,9 @@ function renderKPITab(){
     return '<tr><td><strong>'+getNVName(k.nvId)+'</strong></td><td>'+dsApStr+'</td><td class="amount">'+dsThucStr+'</td><td><span class="badge '+(+pct>=100?'badge-green':'badge-orange')+'">'+pct+'%</span></td><td>'+hhStr+'</td><td class="amount-blue">'+fmt(kpiAmt)+'</td><td class="amount-red">'+fmt(k.phat)+'</td><td>'+(k.ghichu||'')+'</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editKPI(\''+k.id+'\')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteKPI(\''+k.id+'\')">🗑️</button></td></tr>';
   }).join('')+'</tbody></table></div></div>';
 }
-function saveKPI(){const id=document.getElementById('kpiId').value;const data={nvId:document.getElementById('kpiNV').value,monthKey:getMonth().key,vaitro:document.getElementById('kpiVaiTro').value,dsap:+document.getElementById('kpiDSAp').value||0,dsthuc:+document.getElementById('kpiDSThuc').value||0,hoahong:+document.getElementById('kpiHoaHong').value||0,phat:+document.getElementById('kpiPhat').value||0,ghichu:document.getElementById('kpiGhiChu').value};if(id){const k=DB.kpis.find(x=>x.id===id);Object.assign(k,data);}else{data.id=genId();DB.kpis.push(data);}DB.save('kpis');closeModal('modalKPI');refreshPage();showToast('Đã lưu KPI!');}
+function saveKPI(){const id=document.getElementById('kpiId').value;const data={nvId:document.getElementById('kpiNV').value,monthKey:getMonth().key,vaitro:document.getElementById('kpiVaiTro').value,dsap:+document.getElementById('kpiDSAp').value||0,dsthuc:+document.getElementById('kpiDSThuc').value||0,hoahong:+document.getElementById('kpiHoaHong').value||0,phat:+document.getElementById('kpiPhat').value||0,ghichu:document.getElementById('kpiGhiChu').value};if(id){const k=DB.kpis.find(x=>x.id===id);Object.assign(k,data);}else{data.id=genId();DB.kpis.push(data);}DB.save('kpis');closeModal('modalKPI');refreshPage();showToast('Đã lưu KPI!');addLog((id ? 'Cập nhật' : 'Nhập') + ' KPI cho ' + getNVName(data.nvId) + ' (Tháng ' + getMonth().label + ')', 'success');}
 function editKPI(id){const k=DB.kpis.find(x=>x.id===id);if(!k)return;document.getElementById('kpiId').value=k.id;document.getElementById('kpiNV').value=k.nvId;document.getElementById('kpiVaiTro').value=k.vaitro;document.getElementById('kpiDSAp').value=k.dsap;document.getElementById('kpiDSThuc').value=k.dsthuc;document.getElementById('kpiHoaHong').value=k.hoahong;document.getElementById('kpiPhat').value=k.phat;document.getElementById('kpiGhiChu').value=k.ghichu;openModal('modalKPI');}
-function deleteKPI(id){if(!confirm('Xóa?'))return;DB.kpis=DB.kpis.filter(k=>k.id!==id);DB.save('kpis');refreshPage();showToast('Đã xóa!');}
+function deleteKPI(id){const k=DB.kpis.find(x=>x.id===id);if(!confirm('Xóa?'))return;DB.kpis=DB.kpis.filter(k=>k.id!==id);DB.save('kpis');refreshPage();showToast('Đã xóa!');if(k)addLog('Xóa KPI của ' + getNVName(k.nvId) + ' (Tháng ' + getMonth().label + ')', 'warning');}
 
 // === SALARY CALC ===
 function calcAllSalary(){
@@ -342,14 +652,17 @@ function saveKhauTru(){
   closeModal('modalKhauTru');
   renderKTPage();
   showToast('Đã lưu!');
+  addLog((id ? 'Cập nhật' : 'Thêm') + ' khấu trừ loại ' + data.loai + ' cho ' + getNVName(data.nvId) + ' số tiền ' + fmt(data.sotien) + 'đ', 'success');
 }
 
 function deleteKT(id){
+  const kt=DB.khautru.find(k=>k.id===id);
   if(!confirm('Xóa mục này?')) return;
   DB.khautru=DB.khautru.filter(k=>k.id!==id);
   DB.save('khautru');
   renderKTPage();
   showToast('Đã xóa!');
+  if(kt) addLog('Xóa khấu trừ loại ' + kt.loai + ' của ' + getNVName(kt.nvId) + ' số tiền ' + fmt(kt.sotien) + 'đ', 'warning');
 }
 
 function deleteAllKT(){
@@ -361,6 +674,7 @@ function deleteAllKT(){
   DB.save('khautru');
   renderKTPage();
   showToast('Đã xóa '+count+' mục!');
+  addLog('Xóa toàn bộ ' + count + ' mục khấu trừ tháng ' + mk, 'warning');
 }
 
 function renderKTPage(){
@@ -1540,12 +1854,18 @@ function saveAllSchedules(){
   });
   DB.save('calamviec');
   showToast('Đã lưu lịch làm việc!');
+  addLog('Cập nhật lịch làm việc của các phòng ban', 'success');
 }
 
 // === LOG SYSTEM ===
 function renderLogs(){
   const container = document.getElementById('logList');
   if(!container) return;
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  if (role !== 'admin') {
+    container.innerHTML = '<div class="log-empty">🔒 Chỉ quản trị viên mới có quyền xem nhật ký.</div>';
+    return;
+  }
   const filterEl = document.getElementById('logFilter');
   const filter = filterEl ? filterEl.value : '';
   const logs = filter ? appLogs.filter(l => l.type === filter) : appLogs;
@@ -1567,6 +1887,11 @@ function renderLogs(){
 }
 
 function clearLogs(){
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  if (role !== 'admin') {
+    showToast('Chỉ quản trị viên mới có quyền xóa nhật ký!', 'error');
+    return;
+  }
   if(!confirm('Xóa tất cả nhật ký?')) return;
   appLogs = [];
   localStorage.removeItem('spa_logs');
@@ -1905,6 +2230,7 @@ function saveKPIRules(){
   DB.settings.kpiRules = r;
   DB.save('settings');
   showToast('Đã lưu quy tắc KPI!');
+  addLog('Cập nhật quy tắc tính KPI doanh số', 'success');
 }
 function populateKPIRules(){
   const r=loadKPIRules();
@@ -1936,6 +2262,7 @@ function deleteAllKPIs(){
   if(!confirm('Xóa toàn bộ '+count+' KPI tháng '+mk+'?'))return;
   DB.kpis=DB.kpis.filter(k=>k.monthKey!==mk);DB.save('kpis');refreshPage();
   showToast('Đã xóa '+count+' KPI!');
+  addLog('Xóa toàn bộ ' + count + ' KPI tháng ' + mk, 'warning');
 }
 
 // === IMPORT KPI ===
@@ -2313,6 +2640,7 @@ function saveAllPhucap(){
   renderPhucapPage();
   calcAllSalary();
   showToast('Đã lưu phụ cấp & thưởng!');
+  addLog('Cập nhật phụ cấp & thưởng tháng ' + getMonth().label, 'success');
 }
 
 function resetPhucapMonth(){
@@ -2325,6 +2653,7 @@ function resetPhucapMonth(){
   renderPhucapPage();
   calcAllSalary();
   showToast('Đã reset!');
+  addLog('Reset phụ cấp & thưởng tháng ' + mk + ' về mặc định', 'warning');
 }
 
 // === HOLIDAY CONFIG ===
@@ -2346,6 +2675,7 @@ function saveMonthConfig(){
   DB.save('monthConfig');
   updateHolidayNote();
   calcAllSalary();
+  addLog('Cập nhật số ngày lễ tháng ' + mk + ' thành ' + val, 'success');
 }
 
 function setHoliday(add){
@@ -2432,6 +2762,7 @@ function confirmCopyPhucap(){
   renderPhucapPage();
   calcAllSalary();
   showToast('Đã copy '+copied+' NV'+(skipped>0?', bỏ qua '+skipped:'')+' !');
+  addLog('Sao chép phụ cấp từ tháng ' + fromMk + ' sang tháng ' + toMk + ' (' + copied + ' nhân viên)', 'success');
 }
 
 // === SALARY FILE IMPORT ===
@@ -3181,7 +3512,7 @@ function confirmMasterImport(){
 // === BACKUP & RESTORE ===
 function backupDatabase() {
   const backup = {};
-  ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
+  ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','lichoff','settings'].forEach(k => {
     backup[k] = DB[k];
   });
   
@@ -3223,7 +3554,7 @@ function restoreDatabase(event) {
         return;
       }
       
-      ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
+      ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','lichoff','settings'].forEach(k => {
         if (data[k] !== undefined) {
           DB[k] = data[k];
         }
@@ -3249,6 +3580,7 @@ function saveSyncUrl() {
   const url = document.getElementById('syncGoogleUrl').value.trim();
   localStorage.setItem('spa2_sync_google_url', url);
   showToast('Đã lưu đường dẫn đồng bộ Google!');
+  addLog('Cập nhật URL đồng bộ Google Drive', 'success');
 }
 
 function loadSyncUrl() {
@@ -3302,7 +3634,7 @@ async function syncCloudUpload(isAuto = false) {
   }
   
   const backup = {};
-  ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => {
+  ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','lichoff','settings'].forEach(k => {
     backup[k] = DB[k];
   });
   
@@ -3398,7 +3730,7 @@ async function syncCloudDownload(isAuto = false) {
     
     // Check if there is any difference to avoid unnecessary UI redraws
     let hasDifference = false;
-    const keys = ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'];
+    const keys = ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','lichoff','settings'];
     for (const k of keys) {
       if (data[k] !== undefined) {
         const localStr = JSON.stringify(DB[k]);
@@ -3520,6 +3852,10 @@ function applyUserPermissions() {
   if (cardUser) {
     cardUser.style.display = (role === 'admin') ? 'block' : 'none';
   }
+  const navNhatky = document.getElementById('nav-nhatky');
+  if (navNhatky) {
+    navNhatky.style.display = (role === 'admin') ? 'flex' : 'none';
+  }
 }
 
 function handleLogin(e) {
@@ -3562,6 +3898,12 @@ function handleLogout() {
 function renderUserTable() {
   const body = document.getElementById('userTableBody');
   if (!body) return;
+  
+  const role = sessionStorage.getItem('currentUserRole') || 'viewer';
+  if (role !== 'admin') {
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text2)">🔒 Chỉ quản trị viên mới có quyền xem danh sách tài khoản.</td></tr>';
+    return;
+  }
   
   if (!DB.settings.users) {
     DB.settings.users = [

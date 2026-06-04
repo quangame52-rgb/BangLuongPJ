@@ -11,6 +11,7 @@ const DB = {
   calamviec: [],
   monthConfig: [],
   salaries: [],
+  lichoff: [],
   settings: {},
 
   load(key) {
@@ -25,13 +26,16 @@ const DB = {
     } catch (e) { console.error('DB save error:', key, e); }
   },
   loadAll() {
-    ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => this.load(k));
+    ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','lichoff','settings'].forEach(k => this.load(k));
     this._migrate();
   },
   saveAll() {
-    ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','settings'].forEach(k => this.save(k));
+    ['nhanvien','chamcong','tours','kpis','phucap','khautru','calamviec','monthConfig','lichoff','settings'].forEach(k => this.save(k));
   },
   _migrate() {
+    if (!this.lichoff || !Array.isArray(this.lichoff)) {
+      this.lichoff = [];
+    }
     // Migrate from old spa_ prefix
     if (this.nhanvien.length === 0) {
       try {

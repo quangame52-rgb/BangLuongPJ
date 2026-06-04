@@ -50,6 +50,9 @@
       <button class="nav-item" data-page="chamcong" onclick="switchPage('chamcong')">
         <span class="nav-icon">🕐</span><span class="nav-label">Chấm Công</span>
       </button>
+      <button class="nav-item" data-page="lichoff" onclick="switchPage('lichoff')">
+        <span class="nav-icon">🏖️</span><span class="nav-label">Lịch Off</span>
+      </button>
       <button class="nav-item" data-page="tour" onclick="switchPage('tour')">
         <span class="nav-icon">🗺️</span><span class="nav-label">Tour Dịch Vụ</span>
       </button>
@@ -72,7 +75,7 @@
       <button class="nav-item" data-page="caidat" onclick="switchPage('caidat')">
         <span class="nav-icon">⚙️</span><span class="nav-label">Cài Đặt</span>
       </button>
-      <button class="nav-item" data-page="nhatky" onclick="switchPage('nhatky')">
+      <button class="nav-item" data-page="nhatky" id="nav-nhatky" onclick="switchPage('nhatky')">
         <span class="nav-icon">📝</span><span class="nav-label">Nhật Ký</span><span class="log-badge" id="logBadge" style="display:none"></span>
       </button>
     </nav>
@@ -213,7 +216,6 @@
                   <th>Chức Vụ</th>
                   <th>Phòng Ban</th>
                   <th>Trạng Thái</th>
-                  <th>Lịch Off</th>
                   <th>Lương Cơ Bản</th>
                   <th>Ngày Công Chuẩn</th>
                   <th>Ký Quỹ</th>
@@ -233,7 +235,7 @@
           <div class="header-actions">
             <button class="btn btn-danger viewer-hide" onclick="deleteAllCC()">🗑️ Xóa toàn bộ</button>
             <button class="btn btn-secondary viewer-hide" onclick="document.getElementById('ccFileInput').click()">📂 Import Excel (Máy CC)</button>
-            <button class="btn btn-primary viewer-hide" onclick="openModal('modalCC')">+ Nhập Chấm Công</button>
+            <button class="btn btn-primary viewer-hide" onclick="openAddCC()">+ Nhập Chấm Công</button>
             <input type="file" id="ccFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleCCImport(event)" />
           </div>
         </div>
@@ -258,6 +260,100 @@
                 </tr>
               </thead>
               <tbody id="ccBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- LỊCH OFF PAGE -->
+      <div id="page-lichoff" class="page">
+        <div class="page-header">
+          <h1>Lịch Off Nhân Viên <span class="month-badge" id="loMonthBadge">T2/2026</span></h1>
+          <div class="header-actions">
+            <button class="btn btn-danger viewer-hide" onclick="deleteAllLichOff()">🗑️ Xóa toàn bộ</button>
+            <button class="btn btn-primary viewer-hide" onclick="openAddLichOff()">+ Thêm Lịch Off</button>
+          </div>
+        </div>
+        
+        <div class="stats-grid" style="margin-bottom:16px">
+          <div class="stat-card accent-blue">
+            <div class="stat-icon">🏖️</div>
+            <div class="stat-info">
+              <div class="stat-value" id="loStatTotal">0</div>
+              <div class="stat-label">Tổng Ngày Off (Tháng)</div>
+            </div>
+          </div>
+          <div class="stat-card accent-purple">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+              <div class="stat-value" id="loStatNVCount">0</div>
+              <div class="stat-label">Số NV Đăng Ký Off</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header" style="border-bottom:none; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px">
+            <div class="filter-row" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <label for="loNVFilter" style="font-weight:600;color:var(--text2)">Lọc NV:</label>
+              <select id="loNVFilter" onchange="renderLichOffPage()" style="max-width:220px">
+                <option value="">-- Tất cả nhân viên --</option>
+              </select>
+            </div>
+            <div class="weekly-nav-buttons" style="display:flex; gap:6px; align-items:center">
+              <button class="btn btn-sm btn-secondary" onclick="navigateWeek(-1)" style="padding:4px 10px; font-weight:700">&lt;</button>
+              <button class="btn btn-sm btn-secondary" onclick="navigateWeek(1)" style="padding:4px 10px; font-weight:700">&gt;</button>
+              <button class="btn btn-sm btn-secondary" onclick="navigateWeek(0)" style="padding:4px 10px">Hôm nay</button>
+            </div>
+            <div id="loWeekRangeLabel" style="font-size:16px; font-weight:700; color:var(--text); font-family:'Inter'">1 - 7 Th06 2026</div>
+          </div>
+          
+          <!-- Weekly Board Grid Table -->
+          <div class="table-wrap">
+            <table class="data-table" id="loWeekTable">
+              <thead>
+                <tr id="loWeekTableHead">
+                  <!-- Generated dynamically: Nhân viên, T2 1, T3 2, T4 3, T5 4, T6 5, T7 6, CN 7 -->
+                </tr>
+              </thead>
+              <tbody id="loWeekTableBody">
+                <!-- Generated dynamically: Rows of active employees with day off toggle cells -->
+              </tbody>
+            </table>
+          </div>
+          <div style="padding: 10px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border)">
+            <div id="loWeekTotalNV" style="font-size:12px; color:var(--text2)">Tổng cộng 0 Nhân viên</div>
+            <div class="calendar-legend" style="margin-top:0">
+              <div class="legend-item">
+                <div class="legend-color off" style="background:linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(244, 63, 94, 0.2)); border:1px solid var(--red); width:12px; height:12px"></div>
+                <span>Nghỉ off (🏖️ OFF)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color" style="background:rgba(245, 158, 11, 0.08); border:1px solid var(--orange); width:12px; height:12px"></div>
+                <span>Hôm nay (Cột hiện tại)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-20">
+          <div style="padding: 20px 20px 0 20px;">
+            <h3 style="margin:0; font-size: 15px;">Danh Sách Chi Tiết Ngày Off</h3>
+          </div>
+          
+          <div class="table-wrap">
+            <table class="data-table" id="loTable">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Ngày Off</th>
+                  <th>Nhân Viên</th>
+                  <th>Phòng Ban</th>
+                  <th>Ghi Chú</th>
+                  <th class="viewer-hide">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="loBody"></tbody>
             </table>
           </div>
         </div>
@@ -755,19 +851,6 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Lịch Off Hàng Tuần</label>
-            <select id="nvLichOff">
-              <option value="">Không off cố định</option>
-              <option value="Thứ 2">Thứ 2</option>
-              <option value="Thứ 3">Thứ 3</option>
-              <option value="Thứ 4">Thứ 4</option>
-              <option value="Thứ 5">Thứ 5</option>
-              <option value="Thứ 6">Thứ 6</option>
-              <option value="Thứ 7">Thứ 7</option>
-              <option value="Chủ Nhật">Chủ Nhật</option>
-            </select>
-          </div>
-          <div class="form-group">
             <label>Lương Cơ Bản (đ)</label>
             <input type="number" id="nvLuongCB" placeholder="5000000" />
           </div>
@@ -808,7 +891,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label>Nhân Viên *</label>
-            <select id="ccNV"></select>
+            <select id="ccNV" onchange="onCCEmployeeChange()"></select>
           </div>
           <div class="form-group">
             <label>Ngày Công Thực Tế</label>
@@ -835,6 +918,37 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modalCC')">Hủy</button>
         <button class="btn btn-primary" onclick="saveCC()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Lịch Off -->
+  <div class="modal-overlay" id="modalLichOff">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalLichOffTitle">Thêm Lịch Off</h2>
+        <button class="modal-close" onclick="closeModal('modalLichOff')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="loId" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nhân Viên *</label>
+            <select id="loNvId" required></select>
+          </div>
+          <div class="form-group">
+            <label>Ngày Off *</label>
+            <input type="date" id="loNgay" required />
+          </div>
+          <div class="form-group span-2">
+            <label>Ghi Chú</label>
+            <input type="text" id="loGhiChu" placeholder="Nhập lý do off, ghi chú..." />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalLichOff')">Hủy</button>
+        <button class="btn btn-primary" onclick="saveLichOff()">Lưu</button>
       </div>
     </div>
   </div>
