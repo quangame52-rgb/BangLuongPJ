@@ -53,6 +53,9 @@
       <button class="nav-item" data-page="lichoff" onclick="switchPage('lichoff')">
         <span class="nav-icon">🏖️</span><span class="nav-label">Lịch Off</span>
       </button>
+      <button class="nav-item" data-page="lichhen" onclick="switchPage('lichhen')">
+        <span class="nav-icon">📅</span><span class="nav-label">Lịch Hẹn</span>
+      </button>
       <button class="nav-item" data-page="tour" onclick="switchPage('tour')">
         <span class="nav-icon">🗺️</span><span class="nav-label">Tour Dịch Vụ</span>
       </button>
@@ -356,6 +359,19 @@
               <tbody id="loBody"></tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <!-- LỊCH HẸN PAGE -->
+      <div id="page-lichhen" class="page">
+        <div class="page-header">
+          <h1>Lịch Hẹn Khách Hàng</h1>
+          <a href="https://script.google.com/macros/s/AKfycbzQsHr1dhYNwsgx0uJGpBLHFCiLWPewTNJSImNA4AI9EtxhR45vNTCqSlaVjnRRJ7_C6w/exec" target="_blank" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent), var(--purple)); border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+            🔗 Mở Trong Tab Mới
+          </a>
+        </div>
+        <div class="card" style="height: calc(100vh - 160px); padding: 0; overflow: hidden; border-radius: 12px; border: 1px solid var(--border);">
+          <iframe src="https://script.google.com/macros/s/AKfycbzQsHr1dhYNwsgx0uJGpBLHFCiLWPewTNJSImNA4AI9EtxhR45vNTCqSlaVjnRRJ7_C6w/exec" style="width: 100%; height: 100%; border: none;" allow="geolocation; microphone; camera"></iframe>
         </div>
       </div>
 
