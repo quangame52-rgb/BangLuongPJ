@@ -2326,7 +2326,8 @@ function loadMonthConfig(){
 
 function saveMonthConfig(){
   const mk=getMonth().key;
-  const val=+document.getElementById('ngayLeCount').value||0;
+  const inp=document.getElementById('ngayLeCount');
+  const val=inp?+inp.value||0:0;
   let mc=DB.monthConfig.find(c=>c.monthKey===mk);
   if(!mc){mc={monthKey:mk,ngayle:0};DB.monthConfig.push(mc);}
   mc.ngayle=val;
@@ -2337,17 +2338,23 @@ function saveMonthConfig(){
 
 function setHoliday(add){
   const inp=document.getElementById('ngayLeCount');
-  inp.value=+inp.value+add;
-  saveMonthConfig();
+  if(inp) {
+    inp.value=+inp.value+add;
+    saveMonthConfig();
+  }
 }
 
 function resetHoliday(){
-  document.getElementById('ngayLeCount').value=0;
-  saveMonthConfig();
+  const inp=document.getElementById('ngayLeCount');
+  if(inp) {
+    inp.value=0;
+    saveMonthConfig();
+  }
 }
 
 function updateHolidayNote(){
-  const val=+document.getElementById('ngayLeCount').value||0;
+  const inp=document.getElementById('ngayLeCount');
+  const val=inp?+inp.value||0:0;
   const note=document.getElementById('ngayLeNote');
   if(!note) return;
   note.textContent=val>0?'→ NCC = NV.Chuẩn - '+val+' ngày lễ':'';
