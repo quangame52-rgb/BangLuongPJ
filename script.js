@@ -3414,9 +3414,14 @@ async function syncCloudDownload(isAuto = false) {
 }
 
 // Hook into DB.save/saveAll for automatic upload and timestamp update
+window.isBooting = true;
 let autoUploadTimeout = null;
 const originalDBSave = DB.save;
 DB.save = function(key) {
+  if (window.isBooting) {
+    originalDBSave.call(DB, key);
+    return;
+  }
   if (key !== 'settings') {
     if (!DB.settings) DB.settings = {};
     DB.settings.lastUpdated = Date.now();
@@ -3428,6 +3433,10 @@ DB.save = function(key) {
 
 const originalDBSaveAll = DB.saveAll;
 DB.saveAll = function() {
+  if (window.isBooting) {
+    originalDBSaveAll.call(DB);
+    return;
+  }
   if (!DB.settings) DB.settings = {};
   DB.settings.lastUpdated = Date.now();
   originalDBSaveAll.call(DB);
@@ -3463,5 +3472,7 @@ window.addEventListener('focus', () => {
 // === BOOT ===
 initDefaultSchedules();
 populateSelects();refreshPage();
-syncCloudDownload(true);
+syncCloudDownload(true).finally(() => {
+  window.isBooting = false;
+});
 
