@@ -203,6 +203,20 @@ function getMonth() {
   return { key: v, month: m, year: y, label: 'T' + m + '/' + y };
 }
 
+function getMonthKeyFromDate(dateStr) {
+  if (!dateStr) return getMonth().key;
+  // Format YYYY-MM-DD
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (!isNaN(y) && !isNaN(m)) {
+      return `${m}-${y}`;
+    }
+  }
+  return getMonth().key;
+}
+
 function getNV(id) { return DB.nhanvien.find(n => n.id === id); }
 function getNVName(id) { const n = getNV(id); return n ? n.name : '—'; }
 
