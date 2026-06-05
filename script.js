@@ -4165,6 +4165,31 @@ function deleteUser(id) {
 }
 
 // === BOOT ===
+function initDefaultMonth() {
+  const sel = document.getElementById('globalMonth');
+  if (!sel) return;
+  const now = new Date();
+  const curMonth = now.getMonth() + 1;
+  const curYear = now.getFullYear();
+  const targetVal = `${curMonth}-${curYear}`;
+  let hasOption = false;
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === targetVal) {
+      sel.value = targetVal;
+      hasOption = true;
+      break;
+    }
+  }
+  if (!hasOption) {
+    const opt = document.createElement('option');
+    opt.value = targetVal;
+    opt.textContent = `Tháng ${curMonth}/${curYear}`;
+    sel.appendChild(opt);
+    sel.value = targetVal;
+  }
+}
+
+initDefaultMonth();
 initDefaultSchedules();
 populateSelects();refreshPage();
 syncCloudDownload(true).finally(() => {
