@@ -118,6 +118,9 @@
         <span class="sync-text">Đang đồng bộ...</span>
       </div>
       <div class="topbar-actions">
+        <button id="btnGitPush" class="btn btn-git viewer-hide" style="display:none" onclick="triggerGitPush()">
+          🐙 <span class="btn-text">Đẩy lên GitHub</span>
+        </button>
         <button class="btn btn-accent viewer-hide" onclick="document.getElementById('masterImportFile').click()" style="background:linear-gradient(135deg,#6c63ff,#a855f7);border:none">📂 <span class="btn-text">Import Tổng Hợp</span></button>
         <input type="file" id="masterImportFile" accept=".xlsx,.xls" style="display:none" onchange="handleMasterImport(event)" />
         <button class="btn btn-primary" onclick="exportData()">⬇ <span class="btn-text">Xuất Excel</span></button>
@@ -388,20 +391,24 @@
           </div>
         </div>
         <!-- Tour Stats -->
-        <div class="stats-grid" id="tourStatsGrid" style="margin-bottom:16px">
+        <div class="stats-grid stats-grid-5" id="tourStatsGrid" style="margin-bottom:16px">
           <div class="stat-card accent-blue">
             <div class="stat-icon">🗺️</div>
             <div class="stat-info"><div class="stat-value" id="tourStatCount">0</div><div class="stat-label">Tổng Tour</div></div>
           </div>
           <div class="stat-card accent-green">
             <div class="stat-icon">💰</div>
-            <div class="stat-info"><div class="stat-value" id="tourStatPIC">0đ</div><div class="stat-label">Tổng Tiền PIC</div></div>
+            <div class="stat-info"><div class="stat-value" id="tourStatPIC">0đ</div><div class="stat-label">Tổng Tiền Tư vấn</div></div>
+          </div>
+          <div class="stat-card accent-orange">
+            <div class="stat-icon">💆</div>
+            <div class="stat-info"><div class="stat-value" id="tourStatKTV">0đ</div><div class="stat-label">Tổng Tiền KTV</div></div>
           </div>
           <div class="stat-card accent-purple">
             <div class="stat-icon">👨‍⚕️</div>
             <div class="stat-info"><div class="stat-value" id="tourStatBS">0đ</div><div class="stat-label">Tổng Tiền BS</div></div>
           </div>
-          <div class="stat-card accent-orange">
+          <div class="stat-card accent-red">
             <div class="stat-icon">📊</div>
             <div class="stat-info"><div class="stat-value" id="tourStatTotal">0đ</div><div class="stat-label">Tổng Cộng</div></div>
           </div>
@@ -422,9 +429,11 @@
                   <th>Ngày</th>
                   <th>Khách Hàng</th>
                   <th>Dịch Vụ</th>
-                  <th>PIC</th>
+                  <th>Tư vấn (PIC)</th>
+                  <th>Kỹ thuật viên</th>
                   <th>Bác Sĩ</th>
-                  <th>Tiền PIC</th>
+                  <th>Tiền Tư vấn</th>
+                  <th>Tiền KTV</th>
                   <th>Tiền BS</th>
                   <th>Ghi Chú</th>
                   <th class="viewer-hide">Thao Tác</th>
@@ -992,11 +1001,11 @@
             <input type="text" id="tourDichVu" placeholder="Đánh béo, CSD, Laser..." />
           </div>
           <div class="form-group">
-            <label>PIC (Tư vấn)</label>
+            <label>Tư vấn (PIC)</label>
             <select id="tourPIC"><option value="">-- Chọn --</option></select>
           </div>
           <div class="form-group">
-            <label>Tiền Tour PIC (đ)</label>
+            <label>Tiền Tour Tư vấn (đ)</label>
             <input type="number" id="tourTienPIC" placeholder="0" />
           </div>
           <div class="form-group">
@@ -1540,6 +1549,28 @@ function doGet(e) {
           <button type="submit" class="btn btn-primary">Lưu</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Git Sync Log -->
+  <div class="modal-overlay" id="modalGitLog">
+    <div class="modal" style="max-width: 600px; width: 90%;">
+      <div class="modal-header">
+        <h2 style="display:flex; align-items:center; gap:8px">
+          🐙 <span>Đồng bộ GitHub</span>
+        </h2>
+        <button class="modal-close" onclick="closeModal('modalGitLog')">×</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px">
+        <div id="gitLogStatus" style="font-weight: 600; font-size: 15px; display:flex; align-items:center; gap:8px">
+          <!-- status will be inserted here -->
+        </div>
+        <p style="font-size:13px; color:var(--text2)">Chi tiết nhật ký thực thi lệnh Git:</p>
+        <pre id="gitLogOutput" style="background: var(--bg2); color: #a8ffb2; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all;"></pre>
+      </div>
+      <div class="modal-footer" style="padding: 14px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px">
+        <button class="btn btn-primary" onclick="closeModal('modalGitLog')">Đóng</button>
+      </div>
     </div>
   </div>
 

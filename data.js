@@ -157,6 +157,37 @@ const DB = {
 
     mergeNV("Cô Thảo", "PHAN THỊ THU THẢO");
     mergeNV("Chú Tình", "VĂN TĨNH");
+
+    // Migrate tours: move KTV from pic to ktv
+    if (this.tours && Array.isArray(this.tours)) {
+      let migrated = false;
+      this.tours.forEach(t => {
+        if (t.pic && !t.ktv) {
+          const nv = this.nhanvien.find(n => n.id === t.pic);
+          if (nv) {
+            const chucvu = (nv.chucvu || '').toLowerCase();
+            const pb = (nv.phongban || '').toLowerCase();
+            if (chucvu.includes('ktv') || chucvu.includes('dịch vụ') || pb.includes('pdv') || pb.includes('dịch vụ')) {
+              t.ktv = t.pic;
+              t.tienKTV = t.tienPIC || 0;
+              t.pic = '';
+              t.tienPIC = 0;
+              migrated = true;
+            }
+          } else {
+            t.ktv = t.pic;
+            t.tienKTV = t.tienPIC || 0;
+            t.pic = '';
+            t.tienPIC = 0;
+            migrated = true;
+          }
+        }
+      });
+      if (migrated) {
+        this.save('tours');
+      }
+    }
+
     this.saveAll();
   }
 };

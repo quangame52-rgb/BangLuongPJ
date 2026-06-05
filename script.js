@@ -5,6 +5,34 @@ function switchPage(p){if(p==='nhatky'){const role=sessionStorage.getItem('curre
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
 function onMonthChange(){const m=getMonth();const firstDay=new Date(m.year,m.month-1,1);currentWeekStart=getMonday(firstDay);['dashMonthBadge','ccMonthBadge','tourMonthBadge','kpiMonthBadge','luongMonthBadge','ktMonthBadge','pcMonthBadge','loMonthBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=m.label;});const sidebar=document.getElementById('sidebar');if(sidebar)sidebar.classList.remove('open');refreshPage();}
 function refreshPage(){applyUserPermissions();loadSyncUrl();const m=getMonth();['dashMonthBadge','ccMonthBadge','tourMonthBadge','kpiMonthBadge','luongMonthBadge','ktMonthBadge','pcMonthBadge','loMonthBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=m.label;});renderNVTable();renderCCTable();renderTourTable();renderKPITab();calcAllSalary();renderDashboard();renderBaoCao();renderKTPage();renderPhucapPage();renderLichOffPage();loadMonthConfig();populateSelects();renderSchedules();renderLogs();renderUserTable();}
+function detectMonthFromStr(str) {
+  if (!str) return null;
+  const s = str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0111/g,'d').trim();
+  
+  let m = s.match(/thang\s*(\d{1,2})\s*[\/\-\_\.\s]?\s*(\d{4})/i);
+  if (m) return { month: parseInt(m[1]), year: parseInt(m[2]) };
+
+  m = s.match(/(?:^|[^a-z0-9])t(\d{1,2})\s*[\/\-\_\.]?\s*(\d{4})(?:[^a-z0-9]|$)/i);
+  if (m) return { month: parseInt(m[1]), year: parseInt(m[2]) };
+
+  m = s.match(/(?:^|[^a-z0-9])(\d{1,2})\s*[\/\-\_\.]\s*(\d{4})(?:[^a-z0-9]|$)/);
+  if (m) {
+    const month = parseInt(m[1]);
+    const year = parseInt(m[2]);
+    if (month >= 1 && month <= 12 && year >= 2020 && year <= 2099) {
+      return { month, year };
+    }
+  }
+
+  m = s.match(/thang\s*(\d{1,2})/i);
+  if (m) return { month: parseInt(m[1]), year: new Date().getFullYear() };
+
+  m = s.match(/(?:^|[^a-z0-9])t(\d{1,2})(?:[^a-z0-9]|$)/i);
+  if (m) return { month: parseInt(m[1]), year: new Date().getFullYear() };
+
+  return null;
+}
+
 let appLogs = JSON.parse(localStorage.getItem('spa_logs')||'[]');
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3500);addLog(msg,type);}
 function addLog(msg,type='info',details=''){const user = sessionStorage.getItem('currentUser') || 'Hệ thống'; const finalMsg = /^\[.+?\]\s/.test(msg) ? msg : `[${user}] ${msg}`; appLogs.unshift({msg:finalMsg,type,details,time:new Date().toLocaleString('vi-VN')});if(appLogs.length>200)appLogs=appLogs.slice(0,200);localStorage.setItem('spa_logs',JSON.stringify(appLogs));if(currentPage!=='nhatky'){const b=document.getElementById('logBadge');if(b){const errCnt=appLogs.filter(l=>l.type==='error').length;if(errCnt>0){b.textContent=errCnt;b.style.display='inline-flex';}}}renderLogs();}
@@ -378,7 +406,7 @@ function onCCEmployeeChange() {
 }
 
 // === TOUR ===
-function renderTourTable(){const body=document.getElementById('tourBody');if(!body)return;const mk=getMonth().key;const flt=document.getElementById('tourNVFilter');const fv=flt?flt.value:'';let tours=DB.tours.filter(t=>t.monthKey===mk);if(fv)tours=tours.filter(t=>t.pic===fv||t.ktv===fv||t.bs===fv);body.innerHTML=tours.map(t=>`<tr><td>${t.ngay}</td><td>${t.khach}</td><td>${t.dichvu}</td><td>${getNVName(t.pic)}</td><td>${getNVName(t.bs)}</td><td class="amount">${fmt(t.tienPIC)}</td><td class="amount">${fmt(t.tienBS)}</td><td>${t.ghichu||''}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editTour('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTour('${t.id}')">🗑️</button></td></tr>`).join('');const totalPIC=tours.reduce((s,t)=>s+t.tienPIC,0);const totalBS=tours.reduce((s,t)=>s+t.tienBS,0);const el=id=>document.getElementById(id);if(el('tourStatCount'))el('tourStatCount').textContent=tours.length;if(fv){const nvTot=tours.reduce((s,t)=>{let a=0;if(t.pic===fv)a+=t.tienPIC;if(t.bs===fv)a+=t.tienBS;return s+a;},0);if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(nvTot);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng NV Này';}}else{if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(totalPIC+totalBS);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng Cộng';}};const sums={};tours.forEach(t=>{[{id:t.pic,amt:t.tienPIC},{id:t.bs,amt:t.tienBS}].forEach(x=>{if(x.id){sums[x.id]=(sums[x.id]||0)+x.amt;}});});const inl=el('tourSummaryInline');if(inl)inl.innerHTML=Object.entries(sums).map(([id,total])=>`<span class="badge badge-blue" style="font-size:13px;padding:4px 10px">${getNVName(id)}: <strong>${fmt(total)}</strong></span>`).join('');}
+function renderTourTable(){const body=document.getElementById('tourBody');if(!body)return;const mk=getMonth().key;const flt=document.getElementById('tourNVFilter');const fv=flt?flt.value:'';let tours=DB.tours.filter(t=>t.monthKey===mk);if(fv)tours=tours.filter(t=>t.pic===fv||t.ktv===fv||t.bs===fv);body.innerHTML=tours.map(t=>`<tr><td>${t.ngay}</td><td>${t.khach}</td><td>${t.dichvu}</td><td>${getNVName(t.pic)}</td><td>${getNVName(t.ktv)}</td><td>${getNVName(t.bs)}</td><td class="amount">${fmt(t.tienPIC)}</td><td class="amount">${fmt(t.tienKTV)}</td><td class="amount">${fmt(t.tienBS)}</td><td>${t.ghichu||''}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editTour('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTour('${t.id}')">🗑️</button></td></tr>`).join('');const totalPIC=tours.reduce((s,t)=>s+t.tienPIC,0);const totalKTV=tours.reduce((s,t)=>s+t.tienKTV,0);const totalBS=tours.reduce((s,t)=>s+t.tienBS,0);const el=id=>document.getElementById(id);if(el('tourStatCount'))el('tourStatCount').textContent=tours.length;if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatKTV'))el('tourStatKTV').textContent=fmt(totalKTV);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(fv){const nvTot=tours.reduce((s,t)=>{let a=0;if(t.pic===fv)a+=t.tienPIC;if(t.ktv===fv)a+=t.tienKTV;if(t.bs===fv)a+=t.tienBS;return s+a;},0);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(nvTot);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng NV Này';}}else{if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(totalPIC+totalKTV+totalBS);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng Cộng';}};const sums={};tours.forEach(t=>{[{id:t.pic,amt:t.tienPIC},{id:t.ktv,amt:t.tienKTV},{id:t.bs,amt:t.tienBS}].forEach(x=>{if(x.id){sums[x.id]=(sums[x.id]||0)+x.amt;}});});const inl=el('tourSummaryInline');if(inl)inl.innerHTML=Object.entries(sums).map(([id,total])=>`<span class="badge badge-blue" style="font-size:13px;padding:4px 10px">${getNVName(id)}: <strong>${fmt(total)}</strong></span>`).join('');}
 function saveTour(){const id=document.getElementById('tourId').value;const data={monthKey:getMonth().key,ngay:document.getElementById('tourNgay').value,khach:document.getElementById('tourKhach').value,dichvu:document.getElementById('tourDichVu').value,pic:document.getElementById('tourPIC').value,tienPIC:+document.getElementById('tourTienPIC').value||0,ktv:document.getElementById('tourKTV').value,tienKTV:+document.getElementById('tourTienKTV').value||0,bs:document.getElementById('tourBS').value,tienBS:+document.getElementById('tourTienBS').value||0,ghichu:document.getElementById('tourGhiChu').value};if(id){const t=DB.tours.find(x=>x.id===id);Object.assign(t,data);}else{data.id=genId();DB.tours.push(data);}DB.save('tours');const mk=data.monthKey;[data.pic,data.ktv,data.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});closeModal('modalTour');refreshPage();showToast('Đã lưu tour!');addLog((id ? 'Cập nhật' : 'Thêm') + ' tour khách: ' + data.khach + ' - DV: ' + data.dichvu, 'success');}
 function editTour(id){const t=DB.tours.find(x=>x.id===id);if(!t)return;document.getElementById('tourId').value=t.id;document.getElementById('tourNgay').value=t.ngay;document.getElementById('tourKhach').value=t.khach;document.getElementById('tourDichVu').value=t.dichvu;document.getElementById('tourPIC').value=t.pic;document.getElementById('tourTienPIC').value=t.tienPIC;document.getElementById('tourKTV').value=t.ktv;document.getElementById('tourTienKTV').value=t.tienKTV;document.getElementById('tourBS').value=t.bs;document.getElementById('tourTienBS').value=t.tienBS;document.getElementById('tourGhiChu').value=t.ghichu;openModal('modalTour');}
 function deleteTour(id){if(!confirm('Xóa tour này?'))return;const t=DB.tours.find(x=>x.id===id);if(t){const mk=t.monthKey;[t.pic,t.ktv,t.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});addLog('Xóa tour khách: ' + t.khach + ' - DV: ' + t.dichvu, 'warning');}DB.tours=DB.tours.filter(t=>t.id!==id);DB.save('tours');refreshPage();showToast('Đã xóa!');}
@@ -1242,7 +1270,7 @@ function handleCCImport(event){
     try {
       const data = new Uint8Array(e.target.result);
       const wb = XLSX.read(data, {type:'array', cellDates:false});
-      processImportData(wb);
+      processImportData(wb, false, file.name);
     } catch(err) {
       addLog('Lỗi đọc file Excel: ' + err.message, 'error', err.stack || err.toString());
       showToast('Lỗi đọc file! Xem 📝 Nhật Ký', 'error');
@@ -1253,7 +1281,7 @@ function handleCCImport(event){
 }
 
 
-function processImportData(data, silent){
+function processImportData(data, silent, filename){
   function cleanH(val){
     if(val===null||val===undefined)return '';
     let s=val.toString().trim().toLowerCase();
@@ -1270,11 +1298,12 @@ function processImportData(data, silent){
   for (let s = 0; s < numSheets; s++) {
     const ws = isWb ? data.Sheets[data.SheetNames[s]] : null;
     const rows = isWb ? XLSX.utils.sheet_to_json(ws, {header:1, defval:''}) : data;
+    const sheetName = isWb ? data.SheetNames[s] : '';
     
-    parsed = tryParseTimeClock(rows, cleanH);
+    parsed = tryParseTimeClock(rows, cleanH, filename, sheetName);
     if(parsed) break;
     
-    parsed = tryParseConsolidated(rows, cleanH);
+    parsed = tryParseConsolidated(rows, cleanH, filename, sheetName);
     if(parsed) break;
   }
 
@@ -1292,7 +1321,7 @@ function processImportData(data, silent){
   showToast('Import loi! Xem Nhat Ky','error');
 }
 
-function tryParseTimeClock(rows,cleanH){
+function tryParseTimeClock(rows,cleanH,filename,sheetName){
   let headerIdx=-1,colMap={};
   for(let i=0;i<Math.min(rows.length,10);i++){
     const row=rows[i].map(c=>cleanH(c));
@@ -1317,7 +1346,8 @@ function tryParseTimeClock(rows,cleanH){
   if(headerIdx<0)return null;
   addLog('Format: May cham cong. Header dong '+(headerIdx+1),'info','Ma='+colMap.ma+', Ten='+colMap.ten+', Ngay='+colMap.ngay+', Lan=['+colMap.lans+']');
   const dataRows=rows.slice(headerIdx+1).filter(r=>r.length>colMap.ngay&&r[colMap.ten]);
-  const empMap={};let detectedMonth=null;
+  const empMap={};
+  let detectedMonth=detectMonthFromStr(filename)||detectMonthFromStr(sheetName);
   const matchedIds = [];
   dataRows.forEach(row=>{
     const ten=row[colMap.ten]?row[colMap.ten].toString().trim():'';if(!ten)return;
@@ -1337,7 +1367,7 @@ function tryParseTimeClock(rows,cleanH){
 }
 
 
-function tryParseConsolidated(rows,cleanH){
+function tryParseConsolidated(rows,cleanH,filename,sheetName){
   let headerIdx=-1,colSTT=-1,colTen=-1,colChucvu=-1;
   let dayCols=[],colCongTT=-1,colPhat=-1,colTongGio=-1,colNotes=-1,colNgayCong=-1,colNgayLe=-1,colQuaTrinh=-1;
   for(let i=0;i<Math.min(rows.length,5);i++){
@@ -1442,26 +1472,22 @@ function tryParseConsolidated(rows,cleanH){
     }
   }
   if(headerIdx<0)return null;
-  // Detect month - try text patterns then Excel serial dates
-  let detectedMonth=null;
-  for(let i=0;i<=headerIdx;i++){
-    // Try text patterns first
-    const txt=rows[i].map(c=>(c||'').toString()).join(' ');
-    let m=txt.match(/[tT]h[^\d]*(\d{1,2})\s*[\/\-]\s*(\d{4})/)||txt.match(/(\d{1,2})\s*[\/\-]\s*(\d{4})/);
-    if(m){detectedMonth={month:parseInt(m[1]),year:parseInt(m[2])};break;}
-    // Try Excel serial date numbers (days since 1/1/1900, typical range 40000-60000)
-    for(let j=0;j<rows[i].length;j++){
-      const v=rows[i][j];
-      if(typeof v==='number'&&v>40000&&v<60000){
-        // Convert Excel serial to JS date (Excel epoch = Jan 1 1900, but has leap year bug)
-        const jsDate=new Date((v-25569)*86400000);
-        if(!isNaN(jsDate.getTime())){
-          detectedMonth={month:jsDate.getMonth()+1,year:jsDate.getFullYear()};
-          break;
+  // Detect month - try filename/sheetName then text patterns then Excel serial dates
+  let detectedMonth=detectMonthFromStr(filename)||detectMonthFromStr(sheetName);
+  if(!detectedMonth){
+    for(let i=0;i<=headerIdx;i++){
+      const txt=rows[i].map(c=>(c||'').toString()).join(' ');
+      detectedMonth = detectMonthFromStr(txt);
+      if(detectedMonth) break;
+      for(let j=0;j<rows[i].length;j++){
+        const v=rows[i][j];
+        if(typeof v==='number'&&v>40000&&v<60000){
+          const d=new Date((v-25569)*86400000);
+          if(!isNaN(d.getTime())){detectedMonth={month:d.getMonth()+1,year:d.getFullYear()};break;}
         }
       }
+      if(detectedMonth)break;
     }
-    if(detectedMonth)break;
   }
   if(!detectedMonth){const now=new Date();detectedMonth={month:now.getMonth()+1,year:now.getFullYear()};}
 
@@ -1913,6 +1939,7 @@ function handleTourImport(event){
       const wb = XLSX.read(e.target.result, {type:'array'});
       // Find the Tour sheet: prefer sheet with "tour" in name, then try all sheets
       let tourRows = null;
+      let selectedSheetName = '';
       const sheetOrder = [];
       // Priority 1: sheets with "tour" in name
       wb.SheetNames.forEach((name, idx) => {
@@ -1927,6 +1954,7 @@ function handleTourImport(event){
           const txt = rows[i].map(c=>(c||'').toString().toLowerCase()).join(' ');
           if((/tour/i.test(txt) || (/ng[aà]y/i.test(txt) && /kh[aá]ch|d[iị]ch v[uụ]/i.test(txt) && /pic/i.test(txt)))){
             tourRows = rows;
+            selectedSheetName = wb.SheetNames[idx];
             addLog('Tour sheet: "'+wb.SheetNames[idx]+'" ('+rows.length+' rows)','info');
             break;
           }
@@ -1937,9 +1965,10 @@ function handleTourImport(event){
         // Fallback: use first sheet
         const ws = wb.Sheets[wb.SheetNames[0]];
         tourRows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        selectedSheetName = wb.SheetNames[0];
         addLog('Tour sheet: fallback to "'+wb.SheetNames[0]+'"','warning');
       }
-      parseTourFile(tourRows);
+      parseTourFile(tourRows, file.name, selectedSheetName);
     } catch(err) {
       addLog('Lỗi đọc file Tour: '+err.message,'error',err.stack||'');
       showToast('Lỗi đọc file! Xem 📝 Nhật Ký','error');
@@ -1949,7 +1978,7 @@ function handleTourImport(event){
   event.target.value = '';
 }
 
-function parseTourFile(rows){
+function parseTourFile(rows, filename, sheetName){
   function cl(v){
     if(v===null||v===undefined)return '';
     let s=v.toString().trim().toLowerCase();
@@ -1990,25 +2019,83 @@ function parseTourFile(rows){
     return;
   }
 
-  // Detect month from title rows (before header)
-  let detectedMonth=null;
-  for(let i=0;i<=headerIdx+2;i++){
-    if(i>=rows.length) break;
-    const txt=rows[i].map(c=>(c||'').toString()).join(' ');
-    // "THÁNG 3" or "Tháng 3/2026"
-    let m=txt.match(/th[aá]ng\s*(\d{1,2})/i);
-    if(m){ detectedMonth={month:parseInt(m[1])}; }
-    let y=txt.match(/n[aă]m\s*(\d{4})/i)||txt.match(/(\d{4})/);
-    if(y&&detectedMonth) detectedMonth.year=parseInt(y[1]);
-    // Excel serial date
-    for(let j=0;j<rows[i].length;j++){
-      const v=rows[i][j];
-      if(typeof v==='number'&&v>40000&&v<60000){
-        const d=new Date((v-25569)*86400000);
-        if(!isNaN(d.getTime()))detectedMonth={month:d.getMonth()+1,year:d.getFullYear()};
+  // Detect month from filename/sheetName then title rows
+  let detectedMonth = detectMonthFromStr(filename) || detectMonthFromStr(sheetName);
+  if(!detectedMonth){
+    for(let i=0;i<=headerIdx+2;i++){
+      if(i>=rows.length) break;
+      const txt=rows[i].map(c=>(c||'').toString()).join(' ');
+      detectedMonth = detectMonthFromStr(txt);
+      if(detectedMonth) break;
+      
+      // Excel serial date check in title cell
+      for(let j=0;j<rows[i].length;j++){
+        const v=rows[i][j];
+        if(typeof v==='number'&&v>40000&&v<60000){
+          const d=new Date((v-25569)*86400000);
+          if(!isNaN(d.getTime())){detectedMonth={month:d.getMonth()+1,year:d.getFullYear()};break;}
+        }
       }
+      if(detectedMonth) break;
     }
   }
+
+  // Detect from dates frequency in rows if month/year still missing
+  if(!detectedMonth || !detectedMonth.year){
+    const monthCounts = {};
+    const yearCounts = {};
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || colNgay < 0 || colNgay >= row.length) continue;
+      const rawDay = row[colNgay];
+      const dayCell = (rawDay || '').toString().trim();
+      if (!dayCell) continue;
+
+      let m = null, y = null;
+      if (typeof rawDay === 'number' && rawDay > 40000 && rawDay < 60000) {
+        const jsDate = new Date((rawDay - 25569) * 86400000);
+        if (!isNaN(jsDate.getTime())) {
+          m = jsDate.getMonth() + 1;
+          y = jsDate.getFullYear();
+        }
+      } else {
+        const dm = dayCell.match(/^(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-]?(\d{2,4})?$/);
+        if (dm) {
+          m = parseInt(dm[2]);
+          if (dm[3]) {
+            y = parseInt(dm[3]);
+            if (y < 100) y += 2000;
+          }
+        }
+      }
+      if (m >= 1 && m <= 12) {
+        monthCounts[m] = (monthCounts[m] || 0) + 1;
+        if (y) yearCounts[y] = (yearCounts[y] || 0) + 1;
+      }
+    }
+
+    let bestMonth = null, maxMonthCount = 0;
+    for (const [m, count] of Object.entries(monthCounts)) {
+      if (count > maxMonthCount) {
+        maxMonthCount = count;
+        bestMonth = parseInt(m);
+      }
+    }
+    let bestYear = null, maxYearCount = 0;
+    for (const [y, count] of Object.entries(yearCounts)) {
+      if (count > maxYearCount) {
+        maxYearCount = count;
+        bestYear = parseInt(y);
+      }
+    }
+
+    if (bestMonth) {
+      if (!detectedMonth) detectedMonth = {};
+      detectedMonth.month = bestMonth;
+      if (bestYear) detectedMonth.year = bestYear;
+    }
+  }
+
   if(!detectedMonth) detectedMonth={month:new Date().getMonth()+1};
   if(!detectedMonth.year) detectedMonth.year=new Date().getFullYear();
 
@@ -2172,16 +2259,23 @@ function confirmTourImport(){
     const bsId = bsNV ? bsNV.id : '';
     if(bsId && hasBSFee) bsAssigned++;
 
+    const isKTV = nv && (
+      (nv.chucvu || '').toLowerCase().includes('ktv') ||
+      (nv.chucvu || '').toLowerCase().includes('dịch vụ') ||
+      (nv.phongban || '').toLowerCase().includes('pdv') ||
+      (nv.phongban || '').toLowerCase().includes('dịch vụ')
+    );
+
     DB.tours.push({
       id:genId(),
       monthKey:mk,
       ngay:t.ngay,
       khach:t.khach,
       dichvu:t.dichvu,
-      pic:nv.id,
-      tienPIC:t.tienKTV,  // Cột E: tiền cho PIC (KTV)
-      ktv:'',
-      tienKTV:0,
+      pic: !isKTV ? nv.id : '',
+      tienPIC: !isKTV ? t.tienKTV : 0,
+      ktv: isKTV ? nv.id : '',
+      tienKTV: isKTV ? t.tienKTV : 0,
       bs:hasBSFee&&bsId?bsId:'',  // Assign BS when there's a BS fee
       tienBS:t.tienBS,     // Cột F: tiền cho Bác sĩ
       ghichu:t.notes
@@ -2279,7 +2373,7 @@ function handleKPIImport(event){
       const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
       // Debug: show first rows
       addLog('KPI raw data','info','Sheet: '+wb.SheetNames[0]+', Rows: '+rows.length);
-      parseKPIFile(rows);
+      parseKPIFile(rows, false, file.name, wb.SheetNames[0]);
     }catch(err){
       addLog('Lỗi đọc file KPI: '+err.message,'error',err.stack||'');
       alert('Lỗi đọc file KPI: '+err.message);
@@ -2294,7 +2388,7 @@ function handleKPIImport(event){
   event.target.value='';
 }
 
-function parseKPIFile(rows, silent){
+function parseKPIFile(rows, silent, filename, sheetName){
   function cl(v){
     if(v===null||v===undefined)return '';
     let s=v.toString().trim().toLowerCase();
@@ -2307,29 +2401,27 @@ function parseKPIFile(rows, silent){
   const rawDbg=rows.slice(0,6).map((r,i)=>'Row '+(i+1)+': '+r.slice(0,8).map(c=>'"'+(c==null?'':c.toString().substring(0,20))+'"').join(' | ')).join('\n');
   addLog('KPI Import: Đọc file','info','Tổng dòng: '+rows.length+'\n\n'+rawDbg);
 
-  // Detect month from title - only check first 3 rows (avoid data rows)
-  let detectedMonth=null;
-  for(let i=0;i<Math.min(rows.length,3);i++){
-    const txt=rows[i].map(c=>(c||'').toString()).join(' ');
-    // Try combined: "THÁNG 3.2026" or "THÁNG 3/2026" or "THÁNG 3-2026"
-    let combined=txt.match(/th[aá]ng\s*(\d{1,2})\s*[.\/-]\s*(\d{4})/i);
-    if(combined){
-      detectedMonth={month:parseInt(combined[1]),year:parseInt(combined[2])};
-      break;
-    }
-    // Try separate month+year on same row
-    let m=txt.match(/th[aá]ng\s*(\d{1,2})/i);
-    if(m){
-      detectedMonth={month:parseInt(m[1])};
-      // Look for year ONLY in the title cell (not joined data)
-      for(let j=0;j<rows[i].length;j++){
-        const cv=(rows[i][j]||'').toString();
-        const ym=cv.match(/(\d{4})/);
-        if(ym&&parseInt(ym[1])>=2020&&parseInt(ym[1])<=2099){
-          detectedMonth.year=parseInt(ym[1]);break;
+  // Detect month from filename/sheetName then title rows
+  let detectedMonth = detectMonthFromStr(filename) || detectMonthFromStr(sheetName);
+  if(!detectedMonth){
+    for(let i=0;i<Math.min(rows.length,3);i++){
+      const txt=rows[i].map(c=>(c||'').toString()).join(' ');
+      detectedMonth = detectMonthFromStr(txt);
+      if(detectedMonth) break;
+      
+      // Try separate year detection
+      let m=txt.match(/th[aá]ng\s*(\d{1,2})/i);
+      if(m){
+        detectedMonth={month:parseInt(m[1])};
+        for(let j=0;j<rows[i].length;j++){
+          const cv=(rows[i][j]||'').toString();
+          const ym=cv.match(/(\d{4})/);
+          if(ym&&parseInt(ym[1])>=2020&&parseInt(ym[1])<=2099){
+            detectedMonth.year=parseInt(ym[1]);break;
+          }
         }
+        break;
       }
-      break;
     }
   }
   if(!detectedMonth) detectedMonth={month:new Date().getMonth()+1};
@@ -2789,12 +2881,14 @@ function parseSalaryFile(rows, filename){
   function norm(v){ return (v||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0111/g,'d').replace(/\s+/g,' ').trim(); }
   function n(v){ return typeof v==='number'?v:(parseFloat((v||'').toString().replace(/[^0-9.-]/g,''))||0); }
 
-  // Detect month from first few rows
-  let detMonth = null;
-  for(let i=0;i<Math.min(rows.length,5);i++){
-    const txt = rows[i].map(c=>(c||'').toString()).join(' ');
-    const m = txt.match(/T(\d{1,2})[.\/-](\d{4})/i) || txt.match(/[Tt]h[aá]ng\s*(\d{1,2})\s*[\/\-]\s*(\d{4})/);
-    if(m){ detMonth={month:parseInt(m[1]),year:parseInt(m[2])}; break; }
+  // Detect month from filename then first few rows
+  let detMonth = detectMonthFromStr(filename);
+  if(!detMonth){
+    for(let i=0;i<Math.min(rows.length,5);i++){
+      const txt = rows[i].map(c=>(c||'').toString()).join(' ');
+      detMonth = detectMonthFromStr(txt);
+      if(detMonth) break;
+    }
   }
   if(!detMonth) detMonth={month:new Date().getMonth()+1,year:new Date().getFullYear()};
 
@@ -3021,7 +3115,7 @@ function handleMasterImport(event){
     try{
       const wb=XLSX.read(e.target.result,{type:'array'});
       addLog('Import Tổng Hợp: '+file.name,'info','Sheets: '+wb.SheetNames.join(', '));
-      processMasterImport(wb);
+      processMasterImport(wb, file.name);
     }catch(err){
       addLog('Lỗi đọc file: '+err.message,'error');
       showToast('Lỗi đọc file!','error');
@@ -3041,23 +3135,25 @@ function detectSheetType(name){
   return null;
 }
 
-function processMasterImport(wb){
+function processMasterImport(wb, filename){
   masterImportData={sheets:[],detectedMonth:null};
   
-  // Detect month from any sheet name
-  let detMonth=null;
-  wb.SheetNames.forEach(name=>{
-    const m=name.match(/T(\d{1,2})[.\/-]?(\d{4})/i) || name.match(/(\d{1,2})[.\/-](\d{4})/);
-    if(m&&!detMonth) detMonth={month:parseInt(m[1]),year:parseInt(m[2])};
-  });
+  // Detect month from filename or sheet names
+  let detMonth=detectMonthFromStr(filename);
+  if(!detMonth){
+    for(const name of wb.SheetNames){
+      detMonth=detectMonthFromStr(name);
+      if(detMonth) break;
+    }
+  }
   if(!detMonth){
     // Try from first few rows of first sheet
     const ws=wb.Sheets[wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
     for(let i=0;i<Math.min(rows.length,5);i++){
       const txt=rows[i].map(c=>(c||'').toString()).join(' ');
-      const cm=txt.match(/th[aá]ng\s*(\d{1,2})\s*[.\/-]\s*(\d{4})/i);
-      if(cm){detMonth={month:parseInt(cm[1]),year:parseInt(cm[2])};break;}
+      detMonth=detectMonthFromStr(txt);
+      if(detMonth) break;
     }
   }
   if(!detMonth) detMonth={month:new Date().getMonth()+1,year:new Date().getFullYear()};
@@ -3395,12 +3491,21 @@ function confirmMasterImport(){
           const bsId=(bsNV&&bsAmt>0)?bsNV.id:'';
           if(bsId) bsAssigned++;
 
+          const mNv = DB.nhanvien.find(n => n.id === picId);
+          const isKTV = mNv && (
+            (mNv.chucvu || '').toLowerCase().includes('ktv') ||
+            (mNv.chucvu || '').toLowerCase().includes('dịch vụ') ||
+            (mNv.phongban || '').toLowerCase().includes('pdv') ||
+            (mNv.phongban || '').toLowerCase().includes('dịch vụ')
+          );
+
           DB.tours.push({
             id:genId(),monthKey:mk,ngay:currentDay,
             khach:rawKhach,dichvu:rawDV,
-            pic:picId,
-            tienPIC:ktvAmt,
-            ktv:'',tienKTV:0,
+            pic: !isKTV ? picId : '',
+            tienPIC: !isKTV ? ktvAmt : 0,
+            ktv: isKTV ? picId : '',
+            tienKTV: isKTV ? ktvAmt : 0,
             bs:bsId,
             tienBS:bsAmt,
             ghichu:notes
@@ -4062,5 +4167,72 @@ initDefaultSchedules();
 populateSelects();refreshPage();
 syncCloudDownload(true).finally(() => {
   window.isBooting = false;
+  initGitSync();
 });
+
+// === GIT SYNC LOCAL INTERACTION ===
+function initGitSync() {
+  const isLocal = window.location.hostname === 'localhost' || 
+                  window.location.hostname === '127.0.0.1' || 
+                  window.location.protocol === 'file:';
+  
+  if (!isLocal) return;
+
+  // Verify health check from local server
+  fetch('http://localhost:3000/api/health')
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.status === 'ok') {
+        const btn = document.getElementById('btnGitPush');
+        if (btn) {
+          btn.style.display = 'inline-flex';
+        }
+      }
+    })
+    .catch(err => {
+      console.log('Local Node server not running or unreachable.', err);
+    });
+}
+
+async function triggerGitPush() {
+  const btn = document.getElementById('btnGitPush');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Đang đồng bộ...';
+  }
+
+  openModal('modalGitLog');
+  
+  const statusEl = document.getElementById('gitLogStatus');
+  const outputEl = document.getElementById('gitLogOutput');
+  
+  statusEl.innerHTML = '<span style="color:var(--orange)">⏳ Đang thực hiện đẩy dữ liệu lên GitHub...</span>';
+  outputEl.textContent = '$ git add .\n$ git commit -m "Cap nhat tu giao dien local"\n$ git push origin main\n\nĐang gửi yêu cầu tới server local...';
+
+  try {
+    const response = await fetch('http://localhost:3000/api/git-push', {
+      method: 'POST'
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      statusEl.innerHTML = '<span style="color:var(--green)">✅ Đẩy lên GitHub thành công!</span>';
+      outputEl.textContent += `\n\n[SUCCESS]\nStdout:\n${result.stdout || 'Không có log stdout.'}\n\nStderr:\n${result.stderr || ''}`;
+      showToast('Đẩy lên GitHub thành công!', 'success');
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--red)">❌ Đồng bộ GitHub thất bại!</span>';
+      outputEl.textContent += `\n\n[ERROR] Lỗi thực thi:\n${result.message}\n\nStdout:\n${result.stdout || ''}\n\nStderr:\n${result.stderr || ''}`;
+      showToast('Đồng bộ GitHub thất bại!', 'error');
+    }
+  } catch (error) {
+    statusEl.innerHTML = '<span style="color:var(--red)">❌ Lỗi kết nối tới Server Local!</span>';
+    outputEl.textContent += `\n\n[FATAL ERROR] Không thể kết nối tới server local tại http://localhost:3000.\nHãy đảm bảo bạn đã chạy server bằng lệnh 'npm run dev' hoặc 'node server.js' trước.\nChi tiết lỗi: ${error.message}`;
+    showToast('Lỗi kết nối server local!', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🐙 <span class="btn-text">Đẩy lên GitHub</span>';
+    }
+  }
+}
 
