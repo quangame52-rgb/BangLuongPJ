@@ -511,37 +511,29 @@ function calcAllSalary(){
     // KPI income
     const myKPIs=DB.kpis.filter(k=>k.nvId===nv.id&&k.monthKey===mk);
     let dsKPI=0,luongKPI=0;
-    if(cc && cc.luongkpi !== undefined && cc.luongkpi !== null && !isNaN(cc.luongkpi) && cc.luongkpi > 0){
-      luongKPI = cc.luongkpi;
-      const isTeleUser = /tele/i.test(chucvu) || /tele/i.test(nv.chucvu);
-      dsKPI = cc.dsKPI || (isTeleUser ? Math.round(cc.luongkpi / 30000) : 0);
-    } else {
-      const salKpiRec=myKPIs.find(k=>k.ghichu && k.ghichu.includes('Import'));
-      if(salKpiRec){
-        dsKPI=salKpiRec.dsthuc||0;
-        luongKPI=salKpiRec.luongkpi||0;
-      } else {
-        const teleKPI=myKPIs.find(k=>k.vaitro==='Tele'||/tele/i.test(k.vaitro)||k.hoahong===30000||k.hoahong===40000);
-        if(teleKPI && (/tele/i.test(nv.chucvu) || teleKPI.luongkpi > 0 || teleKPI.dsthuc > 0)){
-          dsKPI=teleKPI.dsthuc || (teleKPI.luongkpi && teleKPI.hoahong ? Math.round(teleKPI.luongkpi / teleKPI.hoahong) : 0);
-          luongKPI=(teleKPI.luongkpi !== undefined && teleKPI.luongkpi !== null && teleKPI.luongkpi > 0) ? teleKPI.luongkpi : Math.round(dsKPI * (teleKPI.hoahong || 30000));
-          luongKPI-=(teleKPI.phat||0);
-        } else {
-          myKPIs.forEach(k=>{
-            dsKPI+=k.dsthuc;
-            if(k.luongkpi !== undefined && k.luongkpi !== null && !isNaN(k.luongkpi) && k.luongkpi > 0){
-              luongKPI += k.luongkpi;
-            } else if(k.vaitro==='Tele'||/tele/i.test(k.vaitro)){
-              let rate=k.hoahong;
-              if(!rate) rate=k.dsthuc>=rules.tele.t1?rules.tele.r2:rules.tele.r1;
-              luongKPI+=Math.round(k.dsthuc*rate);
-            } else {
-              luongKPI+=Math.round(k.dsthuc*k.hoahong/100);
-            }
-            luongKPI-=(k.phat||0);
-          });
+    if(myKPIs.length > 0){
+      myKPIs.forEach(k => {
+        if (k.vaitro !== 'Tele' && k.dsthuc > 100) {
+          dsKPI += k.dsthuc;
+        } else if (dsKPI === 0) {
+          dsKPI = k.dsthuc;
         }
-      }
+        let kAmt = 0;
+        if (k.luongkpi !== undefined && k.luongkpi !== null && !isNaN(k.luongkpi) && k.luongkpi > 0) {
+          kAmt = k.luongkpi;
+        } else if (k.vaitro === 'Tele' || /tele/i.test(k.vaitro) || k.hoahong === 30000 || k.hoahong === 40000) {
+          let rate = k.hoahong;
+          if (!rate) rate = k.dsthuc >= rules.tele.t1 ? rules.tele.r2 : rules.tele.r1;
+          kAmt = Math.round(k.dsthuc * rate);
+        } else {
+          kAmt = Math.round(k.dsthuc * k.hoahong / 100);
+        }
+        kAmt -= (k.phat || 0);
+        luongKPI += kAmt;
+      });
+    } else if(cc && cc.luongkpi > 0){
+      luongKPI = cc.luongkpi;
+      dsKPI = cc.dsKPI || 0;
     }
 
     // Overtime: OT_hours × LCB / NCC / giờ_chuẩn × 1.5
