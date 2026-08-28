@@ -511,7 +511,10 @@ function calcAllSalary(){
     // KPI income
     const myKPIs=DB.kpis.filter(k=>k.nvId===nv.id&&k.monthKey===mk);
     let dsKPI=0,luongKPI=0;
-    if(myKPIs.length > 0){
+    if (cc && cc.ghichu && cc.ghichu.includes('Import')) {
+      luongKPI = cc.luongkpi || 0;
+      dsKPI = cc.dsKPI || 0;
+    } else if(myKPIs.length > 0){
       myKPIs.forEach(k => {
         if (k.vaitro !== 'Tele' && k.dsthuc > 100) {
           dsKPI += k.dsthuc;
