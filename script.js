@@ -406,7 +406,7 @@ function onCCEmployeeChange() {
 }
 
 // === TOUR ===
-function renderTourTable(){const body=document.getElementById('tourBody');if(!body)return;const mk=getMonth().key;const flt=document.getElementById('tourNVFilter');const fv=flt?flt.value:'';let tours=DB.tours.filter(t=>t.monthKey===mk);if(fv)tours=tours.filter(t=>t.pic===fv||t.ktv===fv||t.bs===fv);body.innerHTML=tours.map(t=>`<tr><td>${t.ngay}</td><td>${t.khach}</td><td>${t.dichvu}</td><td>${getNVName(t.pic)}</td><td>${getNVName(t.ktv)}</td><td>${getNVName(t.bs)}</td><td class="amount">${fmt(t.tienPIC)}</td><td class="amount">${fmt(t.tienKTV)}</td><td class="amount">${fmt(t.tienBS)}</td><td>${t.ghichu||''}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editTour('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTour('${t.id}')">🗑️</button></td></tr>`).join('');const totalPIC=tours.reduce((s,t)=>s+t.tienPIC,0);const totalKTV=tours.reduce((s,t)=>s+t.tienKTV,0);const totalBS=tours.reduce((s,t)=>s+t.tienBS,0);const el=id=>document.getElementById(id);if(el('tourStatCount'))el('tourStatCount').textContent=tours.length;if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatKTV'))el('tourStatKTV').textContent=fmt(totalKTV);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(fv){const nvTot=tours.reduce((s,t)=>{let a=0;if(t.pic===fv)a+=t.tienPIC;if(t.ktv===fv)a+=t.tienKTV;if(t.bs===fv)a+=t.tienBS;return s+a;},0);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(nvTot);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng NV Này';}}else{if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(totalPIC+totalKTV+totalBS);el('tourStatTotal').parentElement.querySelector('.stat-label').textContent='Tổng Cộng';}};const sums={};tours.forEach(t=>{[{id:t.pic,amt:t.tienPIC},{id:t.ktv,amt:t.tienKTV},{id:t.bs,amt:t.tienBS}].forEach(x=>{if(x.id){sums[x.id]=(sums[x.id]||0)+x.amt;}});});const inl=el('tourSummaryInline');if(inl)inl.innerHTML=Object.entries(sums).map(([id,total])=>`<span class="badge badge-blue" style="font-size:13px;padding:4px 10px">${getNVName(id)}: <strong>${fmt(total)}</strong></span>`).join('');}
+function renderTourTable(){const body=document.getElementById('tourBody');if(!body)return;const mk=getMonth().key;const flt=document.getElementById('tourNVFilter');const fv=flt?flt.value:'';let tours=DB.tours.filter(t=>t.monthKey===mk);if(fv)tours=tours.filter(t=>t.pic===fv||t.ktv===fv||t.bs===fv);body.innerHTML=tours.map(t=>`<tr><td>${t.ngay}</td><td>${t.khach}</td><td>${t.dichvu}</td><td>${getNVName(t.pic)}</td><td>${getNVName(t.ktv)}</td><td>${getNVName(t.bs)}</td><td class="amount">${fmt(t.tienPIC)}</td><td class="amount">${fmt(t.tienKTV)}</td><td class="amount">${fmt(t.tienBS)}</td><td>${t.ghichu||''}</td><td class="viewer-hide"><button class="btn btn-sm btn-secondary" onclick="editTour('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTour('${t.id}')">🗑️</button></td></tr>`).join('');const totalPIC=tours.reduce((s,t)=>s+t.tienPIC,0);const totalKTV=tours.reduce((s,t)=>s+t.tienKTV,0);const totalBS=tours.reduce((s,t)=>s+t.tienBS,0);const el=id=>document.getElementById(id);if(el('tourStatCount'))el('tourStatCount').textContent=tours.length;if(el('tourStatPIC'))el('tourStatPIC').textContent=fmt(totalPIC);if(el('tourStatKTV'))el('tourStatKTV').textContent=fmt(totalKTV);if(el('tourStatBS'))el('tourStatBS').textContent=fmt(totalBS);if(fv){const nvTot=tours.reduce((s,t)=>{let a=0;if(t.pic===fv)a+=t.tienPIC;if(t.ktv===fv)a+=t.tienKTV;if(t.bs===fv)a+=t.tienBS;return s+a;},0);if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(nvTot);const lbl=el('tourStatTotal').parentElement?.querySelector('.stat-label');if(lbl)lbl.textContent='Tổng NV Này';}}else{if(el('tourStatTotal')){el('tourStatTotal').textContent=fmt(totalPIC+totalKTV+totalBS);const lbl=el('tourStatTotal').parentElement?.querySelector('.stat-label');if(lbl)lbl.textContent='Tổng Cộng';}};const sums={};tours.forEach(t=>{[{id:t.pic,amt:t.tienPIC},{id:t.ktv,amt:t.tienKTV},{id:t.bs,amt:t.tienBS}].forEach(x=>{if(x.id){sums[x.id]=(sums[x.id]||0)+x.amt;}});});const inl=el('tourSummaryInline');if(inl)inl.innerHTML=Object.entries(sums).map(([id,total])=>`<span class="badge badge-blue" style="font-size:13px;padding:4px 10px">${getNVName(id)}: <strong>${fmt(total)}</strong></span>`).join('');}
 function saveTour(){const id=document.getElementById('tourId').value;const ngayVal=document.getElementById('tourNgay').value;const mk=getMonthKeyFromDate(ngayVal);const data={monthKey:mk,ngay:ngayVal,khach:document.getElementById('tourKhach').value,dichvu:document.getElementById('tourDichVu').value,pic:document.getElementById('tourPIC').value,tienPIC:+document.getElementById('tourTienPIC').value||0,ktv:document.getElementById('tourKTV').value,tienKTV:+document.getElementById('tourTienKTV').value||0,bs:document.getElementById('tourBS').value,tienBS:+document.getElementById('tourTienBS').value||0,ghichu:document.getElementById('tourGhiChu').value};if(id){const t=DB.tours.find(x=>x.id===id);Object.assign(t,data);}else{data.id=genId();DB.tours.push(data);}DB.save('tours');[data.pic,data.ktv,data.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});closeModal('modalTour');refreshPage();showToast('Đã lưu tour!');addLog((id ? 'Cập nhật' : 'Thêm') + ' tour khách: ' + data.khach + ' - DV: ' + data.dichvu, 'success');}
 function editTour(id){const t=DB.tours.find(x=>x.id===id);if(!t)return;document.getElementById('tourId').value=t.id;document.getElementById('tourNgay').value=t.ngay;document.getElementById('tourKhach').value=t.khach;document.getElementById('tourDichVu').value=t.dichvu;document.getElementById('tourPIC').value=t.pic;document.getElementById('tourTienPIC').value=t.tienPIC;document.getElementById('tourKTV').value=t.ktv;document.getElementById('tourTienKTV').value=t.tienKTV;document.getElementById('tourBS').value=t.bs;document.getElementById('tourTienBS').value=t.tienBS;document.getElementById('tourGhiChu').value=t.ghichu;openModal('modalTour');}
 function deleteTour(id){if(!confirm('Xóa tour này?'))return;const t=DB.tours.find(x=>x.id===id);if(t){const mk=t.monthKey;[t.pic,t.ktv,t.bs].forEach(nvId=>{if(nvId){const cc=DB.chamcong.find(c=>c.nvId===nvId&&c.monthKey===mk);if(cc)delete cc.tourAmt;}});addLog('Xóa tour khách: ' + t.khach + ' - DV: ' + t.dichvu, 'warning');}DB.tours=DB.tours.filter(t=>t.id!==id);DB.save('tours');refreshPage();showToast('Đã xóa!');}
@@ -469,14 +469,23 @@ function calcAllSalary(){
   const rules=loadKPIRules();
   let totals={giocongChuan:0,ncc:0,nctt:0,luongTinh:0,tour:0,dsKPI:0,luongKPI:0,gioOT:0,tienOT:0,pcan:0,pctn:0,pcdl:0,hotro:0,tongPC:0,thuong:0,tongThu:0,kyquy:0,trukhac:0,ungluong:0,thuclinh:0};
 
+  const hasMonthData = DB.chamcong.some(c => c.monthKey === mk) || 
+                       DB.phucap.some(p => p.monthKey === mk) || 
+                       DB.kpis.some(k => k.monthKey === mk) || 
+                       DB.tours.some(t => t.monthKey === mk);
+
   const activeNvs = DB.nhanvien.filter(nv => {
-    if (nv.trangthai !== 'Đã nghỉ việc') return true;
     const hasCC = DB.chamcong.some(c => c.nvId === nv.id && c.monthKey === mk);
     const hasTour = DB.tours.some(t => t.monthKey === mk && (t.pic === nv.id || t.ktv === nv.id || t.bs === nv.id));
     const hasKPI = DB.kpis.some(k => k.nvId === nv.id && k.monthKey === mk);
-    const hasPC = DB.phucap.some(p => p.nvId === nv.id && p.monthKey === mk);
+    const hasPC = DB.phucap.some(p => p.monthKey === mk);
     const hasKT = DB.khautru.some(k => k.nvId === nv.id && k.monthKey === mk);
-    return (hasCC || hasTour || hasKPI || hasPC || hasKT);
+    const hasDataForMonth = (hasCC || hasTour || hasKPI || hasPC || hasKT);
+    
+    if (hasMonthData) {
+      return hasDataForMonth;
+    }
+    return nv.trangthai !== 'Đã nghỉ việc';
   });
 
   activeNvs.forEach((nv,i)=>{
@@ -502,28 +511,43 @@ function calcAllSalary(){
     // KPI income
     const myKPIs=DB.kpis.filter(k=>k.nvId===nv.id&&k.monthKey===mk);
     let dsKPI=0,luongKPI=0;
-    myKPIs.forEach(k=>{
-      dsKPI+=k.dsthuc;
-      if(k.vaitro==='Tele'){
-        let rate=k.hoahong;
-        if(!rate) rate=k.dsthuc>=rules.tele.t1?rules.tele.r2:rules.tele.r1;
-        luongKPI+=Math.round(k.dsthuc*rate);
+    const salKpiRec=myKPIs.find(k=>k.ghichu==='Import file lương');
+    if(salKpiRec){
+      dsKPI=salKpiRec.dsthuc||0;
+      luongKPI=salKpiRec.luongkpi||0;
+    } else {
+      const teleKPI=myKPIs.find(k=>k.vaitro==='Tele'||/tele/i.test(k.vaitro)||k.hoahong===30000||k.hoahong===40000);
+      if(teleKPI && (/tele/i.test(nv.chucvu) || teleKPI.luongkpi > 0 || teleKPI.dsthuc > 0)){
+        dsKPI=teleKPI.dsthuc || (teleKPI.luongkpi && teleKPI.hoahong ? Math.round(teleKPI.luongkpi / teleKPI.hoahong) : 0);
+        luongKPI=(teleKPI.luongkpi !== undefined && teleKPI.luongkpi !== null && teleKPI.luongkpi > 0) ? teleKPI.luongkpi : Math.round(dsKPI * (teleKPI.hoahong || 30000));
+        luongKPI-=(teleKPI.phat||0);
       } else {
-        luongKPI+=Math.round(k.dsthuc*k.hoahong/100);
+        myKPIs.forEach(k=>{
+          dsKPI+=k.dsthuc;
+          if(k.luongkpi !== undefined && k.luongkpi !== null && !isNaN(k.luongkpi) && k.luongkpi > 0){
+            luongKPI += k.luongkpi;
+          } else if(k.vaitro==='Tele'||/tele/i.test(k.vaitro)){
+            let rate=k.hoahong;
+            if(!rate) rate=k.dsthuc>=rules.tele.t1?rules.tele.r2:rules.tele.r1;
+            luongKPI+=Math.round(k.dsthuc*rate);
+          } else {
+            luongKPI+=Math.round(k.dsthuc*k.hoahong/100);
+          }
+          luongKPI-=(k.phat||0);
+        });
       }
-      luongKPI-=(k.phat||0);
-    });
+    }
 
     // Overtime: OT_hours × LCB / NCC / giờ_chuẩn × 1.5
     const gioOT=cc?(cc.gioOT||0):0;
-    const tienOT=(ncc>0&&giocongChuan>0)?Math.round(gioOT*luongCB/ncc/giocongChuan*1.5):0;
+    const tienOT=(cc && cc.tienOT !== undefined && cc.tienOT > 0) ? cc.tienOT : ((ncc>0&&giocongChuan>0)?Math.round(gioOT*luongCB/ncc/giocongChuan*1.5):0);
 
     // Allowances - ăn trưa × công thực tế (không tính ngày lễ)
     const pcan=cc && cc.pcan !== undefined ? cc.pcan : Math.round((nv.pcantrua !== undefined ? nv.pcantrua : 25000) * congTT);
     const pcRec=DB.phucap.find(p=>p.nvId===nv.id&&p.monthKey===mk);
     const pctn=pcRec?(pcRec.pctn||0):0;
     const pcdl=pcRec?(pcRec.pcdl||0):0;
-    const htcd=pcRec?(pcRec.htcd||pcRec.hotro||0):0;
+    const htcd=pcRec?(pcRec.hotro!==undefined?pcRec.hotro:(pcRec.htcd||0)):0;
     const htngayRate=pcRec?(pcRec.htngay||0):0;
     const hotro=htcd+Math.round(htngayRate*congTT);
     const tongPC=pcan+pctn+pcdl+hotro;
@@ -2631,6 +2655,7 @@ function confirmKPIImport(){
       dsap:k.dsap,
       dsthuc:k.dsthuc,
       hoahong:k.hoahong,
+      luongkpi:k.tongTien || (k.vaitro==='Tele'? Math.round(k.dsthuc * k.hoahong) : Math.round(k.dsthuc * k.hoahong / 100)),
       phat:k.phat,
       ghichu:k.notes
     });
@@ -2879,11 +2904,161 @@ function handleSalaryImport(event){
   event.target.value = '';
 }
 
-function parseSalaryFile(rows, filename){
+function parseSalaryRows(rows){
   function norm(v){ return (v||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0111/g,'d').replace(/\s+/g,' ').trim(); }
-  function n(v){ return typeof v==='number'?v:(parseFloat((v||'').toString().replace(/[^0-9.-]/g,''))||0); }
+  function n(v){
+    if(typeof v === 'number') return v;
+    if(!v) return 0;
+    let str = v.toString().trim().replace(/[%\u0111\s]/gi, '');
+    if(!str) return 0;
+    if (/^\d{1,3}(\.\d{3})+$/.test(str)) {
+      str = str.replace(/\./g, '');
+    } else if (/^\d{1,3}(,\d{3})+$/.test(str)) {
+      str = str.replace(/,/g, '');
+    } else {
+      str = str.replace(',', '.');
+    }
+    const parsed = parseFloat(str);
+    return isNaN(parsed) ? 0 : parsed;
+  }
 
-  // Detect month from filename then first few rows
+  let headerIdx = -1, colMap = {};
+  for(let i = 0; i < Math.min(rows.length, 10); i++){
+    const row = rows[i].map(c => norm(c));
+    const hasTen = row.findIndex(c => /^(ho\s*va\s*)?ten(\s*nhan\s*vien|\s*nv)?$|^nhan\s*vien$|^ho\s*ten$/i.test(c));
+    const hasStt = row.findIndex(c => /^s\.?t\.?t\.?$/.test(c));
+    if(hasTen >= 0 || hasStt >= 0){
+      headerIdx = i;
+      row.forEach((c, j) => {
+        if(/^(ho\s*va\s*)?ten(\s*nhan\s*vien|\s*nv)?$|^nhan\s*vien$|^ho\s*ten$/i.test(c)) colMap.ten = j;
+        if(/^ma(\s*nv)?$|^ma\s*nhan\s*vien/.test(c)) colMap.ma = j;
+        if(/chuc\s*vu|^cv$/.test(c)) colMap.chucvu = j;
+        if(/trang\s*thai/.test(c)) colMap.trangthai = j;
+        if(/gio\s*cong\s*chuan|gio\s*chuan/.test(c)) colMap.giocongchuan = j;
+        if(/ngay\s*cong\s*chuan|ngay\s*chuan|^ncc$/.test(c)) colMap.ncc = j;
+        if(/ngay\s*cong\s*(tinh\s*luong|thuc|tt)|nctl/.test(c) || (/ngay\s*cong/.test(c) && colMap.nctt === undefined)) colMap.nctt = j;
+        if(/luong\s*cb|luong\s*co\s*ban/.test(c)) colMap.luongcb = j;
+        if(/luong\s*ngay\s*cong|luong\s*nc|luong\s*cong/.test(c)) colMap.luongnc = j;
+        if(/tour/i.test(c)) colMap.tour = j;
+        if(/doanh\s*so/.test(c)) colMap.ds = j;
+        if(/^kpi\s*%$|ti\s*le\s*kpi|%hh|^hh$/.test(c)) colMap.kpipct = j;
+        if(/luong\s*kpi|hoa\s*hong\s*kpi|kpi\s*\(/i.test(c)) colMap.luongkpi = j;
+        if(/tong\s*gio\s*tang\s*ca|gio\s*ot|gio\s*tang\s*ca/.test(c)) colMap.gioOT = j;
+        if(/tong\s*tien\s*tang\s*ca|tien\s*ot|tien\s*tang\s*ca/.test(c)) colMap.tienOT = j;
+        if(/an\s*trua|pc\s*an/.test(c)) colMap.pcan = j;
+        if(/trach\s*nhiem|pc\s*trach\s*nhiem/.test(c)) colMap.pctn = j;
+        if(/di\s*lai|pc\s*di\s*lai/.test(c)) colMap.pcdl = j;
+        if(/^ho\s*tro$|ho\s*tro\s*co\s*dinh|ht\s*c[d]|pc\s*ho\s*tro/.test(c)) colMap.hotro = j;
+        if(/ho\s*tro.*ngay|ht.*ngay/.test(c)) colMap.htngay = j;
+        if(/thuong(\s*khac|\s*nhom)?$|tong.*thuong/.test(c)) colMap.thuong = j;
+        if(/ky\s*quy/.test(c)) colMap.kyquy = j;
+        if(/tru\s*khac|phat|chi\s*khac/.test(c)) colMap.trukhac = j;
+        if(/ung\s*luong/.test(c)) colMap.ungluong = j;
+        if(/ly\s*do|ghi\s*chu/.test(c)) colMap.lydo = j;
+        if(/thuc\s*linh|thuc\s*lanh|thuc\s*nhan/.test(c)) colMap.thuclinh = j;
+      });
+
+      if(i + 1 < rows.length){
+        const row2 = rows[i+1].map(c => norm(c));
+        row2.forEach((c, j) => {
+          if(colMap.nctt === undefined && /ngay\s*cong\s*(thuc|tt)|thuc\s*te|tinh\s*luong/.test(c)) colMap.nctt = j;
+          if(colMap.ncc === undefined && /ngay\s*cong\s*chuan|so\s*ngay\s*chuan/.test(c)) colMap.ncc = j;
+          if(colMap.hotro === undefined && /^ho\s*tro$|co\s*dinh/.test(c)) colMap.hotro = j;
+          if(colMap.trukhac === undefined && /tru\s*khac|phat/.test(c)) colMap.trukhac = j;
+        });
+      }
+      break;
+    }
+  }
+
+  // Fallback positional colMap if header detected
+  if(headerIdx >= 0){
+    if(colMap.ten === undefined) colMap.ten = 1;
+    if(colMap.chucvu === undefined) colMap.chucvu = 2;
+    if(colMap.trangthai === undefined) colMap.trangthai = 3;
+    if(colMap.giocongchuan === undefined) colMap.giocongchuan = 4;
+    if(colMap.ncc === undefined) colMap.ncc = 5;
+    if(colMap.nctt === undefined) colMap.nctt = 6;
+    if(colMap.luongcb === undefined) colMap.luongcb = 7;
+    if(colMap.tour === undefined) colMap.tour = 9;
+    if(colMap.ds === undefined) colMap.ds = 10;
+    if(colMap.kpipct === undefined) colMap.kpipct = 11;
+    if(colMap.luongkpi === undefined) colMap.luongkpi = 12;
+    if(colMap.gioOT === undefined) colMap.gioOT = 13;
+    if(colMap.tienOT === undefined) colMap.tienOT = 14;
+    if(colMap.pcan === undefined) colMap.pcan = 15;
+    if(colMap.pctn === undefined) colMap.pctn = 16;
+    if(colMap.hotro === undefined) colMap.hotro = 17;
+    if(colMap.thuong === undefined) colMap.thuong = 20;
+    if(colMap.kyquy === undefined) colMap.kyquy = 25;
+    if(colMap.trukhac === undefined) colMap.trukhac = 26;
+    if(colMap.ungluong === undefined) colMap.ungluong = 27;
+    if(colMap.lydo === undefined) colMap.lydo = 28;
+  } else {
+    for(let i = 1; i < Math.min(rows.length, 6); i++){
+      const first = rows[i][0];
+      if(typeof first === 'number' && first >= 1 && first <= 5 && rows[i][1]){
+        headerIdx = i - 1;
+        colMap = {
+          ten: 1, chucvu: 2, trangthai: 3, giocongchuan: 4, ncc: 5, nctt: 6, luongcb: 7,
+          tour: 9, ds: 10, kpipct: 11, luongkpi: 12, gioOT: 13, tienOT: 14, pcan: 15,
+          pctn: 16, hotro: 17, thuong: 20, kyquy: 25, trukhac: 26, ungluong: 27, lydo: 28
+        };
+        break;
+      }
+    }
+  }
+
+  if(headerIdx < 0) return { headerIdx: -1, dataRows: [] };
+
+  const matchedIds = [];
+  const dataRows = [];
+  for(let i = headerIdx + 1; i < rows.length; i++){
+    const row = rows[i];
+    if(!row || row.length < 2) continue;
+    const stt = row[0];
+    const sttNum = typeof stt === 'number' ? stt : parseInt((stt||'').toString().trim(), 10);
+    if(isNaN(sttNum) || sttNum < 1 || sttNum > 200) continue;
+
+    const tenRaw = (colMap.ten !== undefined ? row[colMap.ten] : '').toString().trim();
+    if(!tenRaw || tenRaw.length < 2) continue;
+
+    const matchedNV = matchNV(tenRaw, sttNum.toString(), matchedIds);
+    if(matchedNV) matchedIds.push(matchedNV.id);
+
+    dataRows.push({
+      stt: sttNum,
+      tenFile: tenRaw,
+      chucvu: colMap.chucvu !== undefined ? (row[colMap.chucvu]||'').toString().trim() : '',
+      trangthai: colMap.trangthai !== undefined ? (row[colMap.trangthai]||'').toString().trim() : '',
+      giocongchuan: colMap.giocongchuan !== undefined ? n(row[colMap.giocongchuan]) || 9 : 9,
+      ncc: colMap.ncc !== undefined ? n(row[colMap.ncc]) || 26 : 26,
+      nctt: colMap.nctt !== undefined ? n(row[colMap.nctt]) : 0,
+      luongcb: colMap.luongcb !== undefined ? n(row[colMap.luongcb]) : 0,
+      tour: colMap.tour !== undefined ? n(row[colMap.tour]) : 0,
+      ds: colMap.ds !== undefined ? n(row[colMap.ds]) : 0,
+      kpipct: colMap.kpipct !== undefined ? n(row[colMap.kpipct]) : 0,
+      luongkpi: colMap.luongkpi !== undefined ? n(row[colMap.luongkpi]) : 0,
+      gioOT: colMap.gioOT !== undefined ? n(row[colMap.gioOT]) : 0,
+      tienOT: colMap.tienOT !== undefined ? n(row[colMap.tienOT]) : 0,
+      pcan: colMap.pcan !== undefined ? n(row[colMap.pcan]) : 0,
+      pctn: colMap.pctn !== undefined ? n(row[colMap.pctn]) : 0,
+      pcdl: colMap.pcdl !== undefined ? n(row[colMap.pcdl]) : 0,
+      hotro: colMap.hotro !== undefined ? n(row[colMap.hotro]) : 0,
+      htngay: colMap.htngay !== undefined ? n(row[colMap.htngay]) : 0,
+      thuong: colMap.thuong !== undefined ? n(row[colMap.thuong]) : 0,
+      kyquy: colMap.kyquy !== undefined ? n(row[colMap.kyquy]) : 0,
+      trukhac: colMap.trukhac !== undefined ? n(row[colMap.trukhac]) : 0,
+      ungluong: colMap.ungluong !== undefined ? n(row[colMap.ungluong]) : 0,
+      lydo: colMap.lydo !== undefined ? (row[colMap.lydo]||'').toString().trim() : '',
+      matchedNV
+    });
+  }
+
+  return { headerIdx, dataRows, colMap };
+}
+
+function parseSalaryFile(rows, filename){
   let detMonth = detectMonthFromStr(filename);
   if(!detMonth){
     for(let i=0;i<Math.min(rows.length,5);i++){
@@ -2894,98 +3069,13 @@ function parseSalaryFile(rows, filename){
   }
   if(!detMonth) detMonth={month:new Date().getMonth()+1,year:new Date().getFullYear()};
 
-  // Find header row - look for row with "ten" or "nhan vien" or "ho ten"
-  let headerIdx=-1, colMap={};
-  for(let i=0;i<Math.min(rows.length,10);i++){
-    const row = rows[i].map(c=>norm(c));
-    // Check for STT or NV name column
-    const hasTen = row.findIndex(c=>/^(ho\s*va\s*)?ten(\s*nhan\s*vien|\s*nv)?$|nhan\s*vien/.test(c));
-    const hasStt = row.findIndex(c=>/^s\.?t\.?t\.?$/.test(c));
-    if(hasTen>=0 || hasStt>=0){
-      headerIdx=i;
-      // Map columns
-      row.forEach((c,j)=>{
-        if(/^(ho\s*va\s*)?ten(\s*nhan\s*vien|\s*nv)?$|nhan\s*vien/.test(c)) colMap.ten=j;
-        if(/^ma(\s*nv)?$|^ma\s*nhan\s*vien/.test(c)) colMap.ma=j;
-        if(/ngay\s*cong\s*(thuc|tt)/.test(c)||(/ngay\s*cong/.test(c)&&!colMap.nctt)) colMap.nctt=j;
-        if(/ngay\s*cong\s*chuan/.test(c)||(/ngay\s*chuan/.test(c)&&!colMap.ncc)) colMap.ncc=j;
-        if(/an\s*trua|pc\s*an/.test(c)) colMap.pcan=j;
-        if(/tour/i.test(c)) colMap.tour=j;
-        if(/trach\s*nhiem/.test(c)) colMap.pctn=j;
-        if(/di\s*lai/.test(c)) colMap.pcdl=j;
-        if(/ho\s*tro\s*co\s*dinh|ht\s*c[d]/.test(c)) colMap.htcd=j;
-        if(/ho\s*tro.*ngay|ht.*ngay/.test(c)) colMap.htngay=j;
-        if(/thuong(\s*nhom)?$|tong.*thuong/.test(c)) colMap.thuong=j;
-        if(/doanh\s*so/.test(c)) colMap.ds=j;
-        if(/^kpi\s*%$|ti\s*le\s*kpi/.test(c)) colMap.kpipct=j;
-        if(/luong\s*kpi|hoa\s*hong\s*kpi/.test(c)) colMap.luongkpi=j;
-        if(/ung\s*luong/.test(c)) colMap.ungluong=j;
-        if(/chi\s*tien|chi\s*khac/.test(c)) colMap.chitien=j;
-        if(/phat\s*tien|tien\s*phat/.test(c)) colMap.phattien=j;
-      });
-      // If nctt not found, check next row too (multi-level header)
-      if(colMap.nctt===undefined && i+1<rows.length){
-        const row2=rows[i+1].map(c=>norm(c));
-        row2.forEach((c,j)=>{
-          if(/ngay\s*cong\s*(thuc|tt)|thuc\s*te/.test(c)) colMap.nctt=j;
-          if(/ngay\s*cong\s*chuan|so\s*ngay\s*chuan/.test(c)) colMap.ncc=j;
-        });
-      }
-      break;
-    }
+  const parsed = parseSalaryRows(rows);
+  if(parsed.headerIdx < 0 || !parsed.dataRows.length){
+    showToast('Không nhận diện được dữ liệu file lương!','error');
+    return;
   }
 
-  // Fallback: try to detect by position if specific known format
-  if(headerIdx<0){
-    // Try row 2-4 looking for numeric stt
-    for(let i=1;i<Math.min(rows.length,6);i++){
-      const first = rows[i][0];
-      if(typeof first==='number' && first>=1 && first<=5 && rows[i][1]){
-        // Guess columns by position based on screenshot
-        headerIdx=i-1;
-        colMap={ten:1,ncc:5,nctt:6,pcan:16,pctn:17,pcdl:18,thuong:21,ds:11,ungluong:27};
-        break;
-      }
-    }
-  }
-
-  if(headerIdx<0){ showToast('Không nhận diện được file lương!','error'); return; }
-
-  // Parse data rows
-  const dataRows=[];
-  const matchedIds = [];
-  for(let i=headerIdx+1;i<rows.length;i++){
-    const row=rows[i];
-    const stt=row[0]; 
-    if(typeof stt==='number'&&stt>=1&&stt<=200 || (stt&&/^\d+$/.test((stt||'').toString().trim()))){
-      const tenRaw=(colMap.ten!==undefined?row[colMap.ten]:'').toString().trim();
-      if(!tenRaw||tenRaw.length<2) continue;
-      // Match NV
-      const matchedNV = matchNV(tenRaw, stt, matchedIds);
-      if (matchedNV) matchedIds.push(matchedNV.id);
-      dataRows.push({
-        tenFile:tenRaw, matchedNV,
-        nctt:colMap.nctt!==undefined?n(row[colMap.nctt]):0,
-        ncc:colMap.ncc!==undefined?n(row[colMap.ncc]):0,
-        pcan:colMap.pcan!==undefined?n(row[colMap.pcan]):0,
-        pctn:colMap.pctn!==undefined?n(row[colMap.pctn]):0,
-        pcdl:colMap.pcdl!==undefined?n(row[colMap.pcdl]):0,
-        htcd:colMap.htcd!==undefined?n(row[colMap.htcd]):0,
-        htngay:colMap.htngay!==undefined?n(row[colMap.htngay]):0,
-        thuong:colMap.thuong!==undefined?n(row[colMap.thuong]):0,
-        ds:colMap.ds!==undefined?n(row[colMap.ds]):0,
-        kpipct:colMap.kpipct!==undefined?n(row[colMap.kpipct]):0,
-        luongkpi:colMap.luongkpi!==undefined?n(row[colMap.luongkpi]):0,
-        ungluong:colMap.ungluong!==undefined?n(row[colMap.ungluong]):0,
-        chitien:colMap.chitien!==undefined?n(row[colMap.chitien]):0,
-        phattien:colMap.phattien!==undefined?n(row[colMap.phattien]):0,
-        tour:colMap.tour!==undefined?n(row[colMap.tour]):0,
-      });
-    }
-  }
-
-  if(!dataRows.length){showToast('Không tìm thấy dữ liệu nhân viên!','error');return;}
-
+  const { dataRows, colMap } = parsed;
   salaryImportData={dataRows,detMonth,colMap,filename};
 
   // Populate month selector
@@ -3034,6 +3124,12 @@ function confirmSalaryImport(){
   logEl.style.display='block'; logEl.innerHTML='';
   const log=msg=>{logEl.innerHTML+='<div>'+msg+'</div>';logEl.scrollTop=logEl.scrollHeight;};
 
+  // Clear existing month records before importing fresh file
+  if(doCC) DB.chamcong = DB.chamcong.filter(c => c.monthKey !== mk);
+  if(doPC || doThuong) DB.phucap = DB.phucap.filter(p => p.monthKey !== mk);
+  if(doKPI) DB.kpis = DB.kpis.filter(k => k.monthKey !== mk);
+  if(doKT) DB.khautru = DB.khautru.filter(k => k.monthKey !== mk);
+
   let ok=0,skip=0;
   salaryImportData.dataRows.forEach(d=>{
     if(!d.matchedNV){skip++;return;}
@@ -3041,9 +3137,14 @@ function confirmSalaryImport(){
     if (nv.name !== d.tenFile) {
       nv.name = d.tenFile;
     }
+    if (d.luongcb > 0) nv.luongcb = d.luongcb;
+    if (d.ncc > 0) nv.ngaycongchuan = d.ncc;
+    if (d.giocongchuan > 0) nv.giocongchuan = d.giocongchuan;
+    if (d.chucvu) nv.chucvu = d.chucvu;
+    if (d.trangthai) nv.trangthai = d.trangthai;
+    nv.kyquy = d.kyquy;
 
     if(doCC){
-      DB.chamcong=DB.chamcong.filter(c=>!(c.nvId===nv.id&&c.monthKey===mk));
       DB.chamcong.push({
         id:genId(),
         nvId:nv.id,
@@ -3053,46 +3154,66 @@ function confirmSalaryImport(){
         giotre:0,
         phattle:0,
         pcan:d.pcan||0,
-        luongcb:nv.luongcb,
+        luongcb:d.luongcb||nv.luongcb,
         ncc:d.ncc||nv.ngaycongchuan||26,
-        giocongchuan:nv.giocongchuan||9,
-        chucvu:nv.chucvu,
+        giocongchuan:d.giocongchuan||nv.giocongchuan||9,
+        gioOT:d.gioOT||0,
+        tienOT:d.tienOT||0,
+        chucvu:d.chucvu||nv.chucvu,
         tourAmt:d.tour||0,
         ghichu:'Import file lương'
       });
-      DB.save('chamcong');
     }
 
     if(doPC||doThuong){
       let pc=DB.phucap.find(p=>p.nvId===nv.id&&p.monthKey===mk);
-      if(!pc){pc={id:genId(),nvId:nv.id,monthKey:mk,pctn:0,pcdl:0,htcd:0,htngay:0,thuong:0};DB.phucap.push(pc);}
-      if(doPC){pc.pctn=d.pctn;pc.pcdl=d.pcdl;pc.htcd=d.htcd;pc.htngay=d.htngay;}
-      if(doThuong) pc.thuong=d.thuong;
-      DB.save('phucap');
+      if(!pc){pc={id:genId(),nvId:nv.id,monthKey:mk,pctn:0,pcdl:0,htcd:0,htngay:0,hotro:0,thuong:0};DB.phucap.push(pc);}
+      if(doPC){
+        pc.pctn=d.pctn||0;
+        pc.pcdl=d.pcdl||0;
+        pc.htcd=d.hotro||d.htcd||0;
+        pc.hotro=d.hotro||d.htcd||0;
+        pc.htngay=d.htngay||0;
+      }
+      if(doThuong) pc.thuong=d.thuong||0;
     }
 
-    if(doKPI&&d.ds>0){
-      DB.kpis=DB.kpis.filter(k=>!(k.nvId===nv.id&&k.monthKey===mk));
-      DB.kpis.push({id:genId(),nvId:nv.id,monthKey:mk,
-        vaitro:nv.chucvu,dsap:0,dsthuc:d.ds,hoahong:d.kpipct,phat:0,ghichu:'Import file lương'});
-      DB.save('kpis');
+    if(doKPI){
+      if(d.ds > 0 || d.luongkpi > 0){
+        const isTeleRow=/tele/i.test(nv.chucvu)||/tele/i.test(d.chucvu)||d.kpipct===30000||d.kpipct===40000||d.kpipct===30||d.kpipct===40;
+        const rate = (d.kpipct === 30 || d.kpipct === 40) ? d.kpipct * 1000 : (d.kpipct || (isTeleRow ? 30000 : 0));
+        const computedDS = d.ds || (isTeleRow && d.luongkpi && rate ? Math.round(d.luongkpi / rate) : 0);
+        DB.kpis.push({
+          id:genId(),
+          nvId:nv.id,
+          monthKey:mk,
+          vaitro:isTeleRow?'Tele':(d.chucvu||nv.chucvu),
+          dsap:isTeleRow?60:0,
+          dsthuc:computedDS,
+          hoahong:rate,
+          luongkpi:d.luongkpi||0,
+          phat:0,
+          ghichu:'Import file lương'
+        });
+      }
     }
 
     if(doKT){
-      DB.khautru=DB.khautru.filter(k=>!(k.nvId===nv.id&&k.monthKey===mk&&(k.loai==='ungluong'||k.loai==='chitien'||k.loai==='phattien')));
       if(d.ungluong>0){
-        DB.khautru.push({id:genId(),nvId:nv.id,monthKey:mk,loai:'ungluong',ngay:'',sotien:d.ungluong,lanUng:1,ghichu:'Import file lương'});
+        DB.khautru.push({id:genId(),nvId:nv.id,monthKey:mk,loai:'ungluong',ngay:'',sotien:d.ungluong,lanUng:1,ghichu:d.lydo||'Import file lương'});
       }
-      if(d.chitien>0){
-        DB.khautru.push({id:genId(),nvId:nv.id,monthKey:mk,loai:'chitien',ngay:'',sotien:d.chitien,lanUng:0,ghichu:'Import file lương'});
+      if(d.trukhac>0){
+        DB.khautru.push({id:genId(),nvId:nv.id,monthKey:mk,loai:'chitien',ngay:'',sotien:d.trukhac,lanUng:0,ghichu:d.lydo||'Import file lương'});
       }
-      if(d.phattien>0){
-        DB.khautru.push({id:genId(),nvId:nv.id,monthKey:mk,loai:'phattien',ngay:'',sotien:d.phattien,lanUng:0,ghichu:'Import file lương'});
-      }
-      DB.save('khautru');
     }
     ok++;
   });
+
+  DB.save('chamcong');
+  DB.save('phucap');
+  DB.save('kpis');
+  DB.save('khautru');
+  DB.save('nhanvien');
 
   // Set global month
   const gSel=document.getElementById('globalMonth');
@@ -3100,7 +3221,6 @@ function confirmSalaryImport(){
 
   log('<strong style="color:var(--accent2)">✅ Import '+ok+' NV thành công'+(skip>0?' ('+skip+' không khớp)':'')+'</strong>');
   addLog('Import file lương: '+ok+' NV','success','Tháng: '+mk+', file: '+salaryImportData.filename);
-  DB.save('nhanvien');
   calcAllSalary();
   refreshPage();
   showToast('Import '+ok+' NV thành công!');
@@ -3233,126 +3353,111 @@ function confirmMasterImport(){
     if(sheet.type==='luong'){
       log('💰 <strong>Đang xử lý Bảng Lương:</strong> '+sheet.name+'...');
       try{
-        const rows=sheet.rows;
-        // Find header row with STT, Nhân viên
-        let hIdx=-1;
-        for(let i=0;i<6;i++){
-          const r0=(rows[i]&&rows[i][0]||'').toString().toLowerCase();
-          if(/stt|^s\.?t\.?t/.test(r0)){hIdx=i;break;}
-        }
-        if(hIdx<0){log('⚠️ Lương: Không tìm thấy header STT');}
-        else{
-          // Expect data rows start 2 rows after header (skip sub-header)
-          const dataStart=hIdx+2;
+        const parsed = parseSalaryRows(sheet.rows);
+        if(parsed.headerIdx < 0 || !parsed.dataRows.length){
+          log('⚠️ Lương: Không nhận diện được dữ liệu');
+        }else{
           let imported=0,created=0;
-          const matchedIds = [];
-          for(let i=dataStart;i<rows.length;i++){
-            const row=rows[i];
-            if(!row||row.length<5) continue;
-            const stt=row[0];
-            if(typeof stt!=='number'||stt<1||stt>100) continue;
-            const rawName=(row[1]||'').toString().trim();
-            if(!rawName||rawName.length<2) continue;
-            const chucvu=(row[2]||'').toString().trim();
-            const trangthai=(row[3]||'').toString().trim();
-            const gioCongChuan=parseFloat(row[4])||9;
-            const ncc=parseFloat(row[5])||26;
-            const nctl=parseFloat(row[6])||0;
-            const luongCB=parseFloat(row[7])||0;
-            const tourAmt=parseFloat(row[9])||0;
-            const dsKPI=parseFloat(row[10])||0;
-            const hhRate=parseFloat(row[11])||0;
-            const luongKPI=parseFloat(row[12])||0;
-            const gioOT=parseFloat(row[13])||0;
-            const pcanVal=parseFloat(row[15])||0;
-            const pctn=parseFloat(row[16])||0;
-            const hotro=parseFloat(row[17])||0;
-            const thuong=parseFloat(row[20])||0;
-            const kyquy=parseFloat(row[25])||0;
-            const trukhac=parseFloat(row[26])||0;
-            const ungluong=parseFloat(row[27])||0;
-            const lydo=(row[28]||'').toString().trim();
-            // Match or create NV
-            let nv=matchNV(rawName, stt.toString(), matchedIds);
+          // Clear existing month records before master salary import
+          DB.chamcong = DB.chamcong.filter(c => c.monthKey !== mk);
+          DB.phucap = DB.phucap.filter(p => p.monthKey !== mk);
+          DB.kpis = DB.kpis.filter(k => k.monthKey !== mk);
+          DB.khautru = DB.khautru.filter(k => k.monthKey !== mk);
+
+          parsed.dataRows.forEach(d => {
+            let nv = d.matchedNV;
             if(!nv){
-              nv={id:genId(),manv:stt.toString(),name:rawName,chucvu:chucvu||'NV',phongban:'Khác',trangthai:trangthai||'Chính thức',luongcb:luongCB,ngaycongchuan:ncc,giocongchuan:gioCongChuan,pctrachnhiem:0,kyquy:kyquy};
+              nv = {
+                id: genId(),
+                manv: d.stt.toString(),
+                name: d.tenFile,
+                chucvu: d.chucvu || 'NV',
+                phongban: 'Khác',
+                trangthai: d.trangthai || 'Chính thức',
+                luongcb: d.luongcb,
+                ngaycongchuan: d.ncc,
+                giocongchuan: d.giocongchuan,
+                pctrachnhiem: 0,
+                kyquy: d.kyquy
+              };
               DB.nhanvien.push(nv);
               created++;
-              log('🆕 Tạo NV mới: '+rawName);
+              log('🆕 Tạo NV mới: ' + d.tenFile);
             } else {
-              nv.manv = stt.toString();
-              if (nv.name !== rawName) {
-                nv.name = rawName;
-              }
+              nv.manv = d.stt.toString();
+              if (nv.name !== d.tenFile) nv.name = d.tenFile;
             }
-            if (nv) matchedIds.push(nv.id);
-            // Update NV master data
-            if(luongCB>0) nv.luongcb=luongCB;
-            nv.ngaycongchuan=ncc;
-            nv.giocongchuan=gioCongChuan;
-            nv.kyquy=kyquy;
-            if(chucvu) nv.chucvu=chucvu;
-            nv.pcantrua=pcanVal===0?0:25000;
-            // Update chamcong - add OT if we have a CC record, or create minimal one
-            let cc=DB.chamcong.find(c=>c.nvId===nv.id&&c.monthKey===mk);
-            if(cc){
-              if(gioOT>0) cc.gioOT=gioOT;
-              cc.pcan=pcanVal;
-              cc.luongcb=luongCB;
-              cc.ncc=ncc;
-              cc.giocongchuan=gioCongChuan;
-              cc.chucvu=chucvu;
-              cc.ngaycongtt=nctl;
-              cc.ngayle=0;
-              cc.tourAmt=tourAmt;
-            } else if(nctl>0){
-              // Create CC record from NCTL (we don't know congTT vs ngayle split, use NCTL as congTT with 0 lễ)
-              DB.chamcong.push({
-                id:genId(),
-                nvId:nv.id,
-                monthKey:mk,
-                ngaycongtt:nctl,
-                ngayle:0,
-                ngaynghi:0,
-                gioOT:gioOT,
-                pcan:pcanVal,
-                luongcb:luongCB,
-                ncc:ncc,
-                giocongchuan:gioCongChuan,
-                chucvu:chucvu,
-                tourAmt:tourAmt,
-                ghichu:'Import từ sheet Lương'
+
+            if(d.luongcb > 0) nv.luongcb = d.luongcb;
+            nv.ngaycongchuan = d.ncc;
+            nv.giocongchuan = d.giocongchuan;
+            nv.kyquy = d.kyquy;
+            if(d.chucvu) nv.chucvu = d.chucvu;
+            if(d.trangthai) nv.trangthai = d.trangthai;
+
+            // Add CC
+            DB.chamcong.push({
+              id: genId(),
+              nvId: nv.id,
+              monthKey: mk,
+              ngaycongtt: d.nctt,
+              ngayle: 0,
+              ngaynghi: 0,
+              gioOT: d.gioOT,
+              tienOT: d.tienOT,
+              pcan: d.pcan,
+              luongcb: d.luongcb || nv.luongcb,
+              ncc: d.ncc,
+              giocongchuan: d.giocongchuan,
+              chucvu: d.chucvu || nv.chucvu,
+              tourAmt: d.tour,
+              ghichu: 'Import từ sheet Lương'
+            });
+
+            // Add Phụ Cấp
+            DB.phucap.push({
+              id: genId(),
+              nvId: nv.id,
+              monthKey: mk,
+              pctn: d.pctn,
+              hotro: d.hotro,
+              htcd: d.hotro,
+              htngay: d.htngay,
+              pcdl: d.pcdl,
+              thuong: d.thuong
+            });
+
+            // Add KPI if no separate KPI sheet exists or if luongkpi > 0
+            const hasKPISheet = masterImportData.sheets.some(s => s.type === 'kpi' && s.enabled);
+            if((d.ds > 0 || d.luongkpi > 0) && !hasKPISheet){
+              const isTele = /tele/i.test(d.chucvu || nv.chucvu);
+              DB.kpis.push({
+                id: genId(),
+                nvId: nv.id,
+                monthKey: mk,
+                vaitro: isTele ? 'Tele' : 'TV',
+                dsap: 0,
+                dsthuc: d.ds,
+                hoahong: d.kpipct,
+                luongkpi: d.luongkpi,
+                phat: 0,
+                ghichu: 'Import Lương'
               });
             }
-            // Phụ cấp (trách nhiệm, hỗ trợ, thưởng)
-            let pc=DB.phucap.find(p=>p.nvId===nv.id&&p.monthKey===mk);
-            if(!pc){pc={id:genId(),nvId:nv.id,monthKey:mk,pctn:0,hotro:0,htcd:0,htngay:0,pcdl:0,thuong:0};DB.phucap.push(pc);}
-            pc.pctn=pctn;
-            pc.hotro=hotro;
-            pc.htcd=hotro;
-            pc.htngay=0;
-            pc.pcdl=0;
-            pc.thuong=thuong;
-            // KPI - only import from Lương sheet if no separate KPI sheet exists
-            const hasKPISheet=masterImportData.sheets.some(s=>s.type==='kpi'&&s.enabled);
-            if(dsKPI>0&&!hasKPISheet){
-              DB.kpis=DB.kpis.filter(k=>!(k.nvId===nv.id&&k.monthKey===mk&&k.ghichu==='Import Lương'));
-              const isTele=/tele/i.test(chucvu);
-              DB.kpis.push({id:genId(),nvId:nv.id,monthKey:mk,vaitro:isTele?'Tele':'TV',dsap:0,dsthuc:dsKPI,hoahong:isTele?hhRate:(hhRate>0&&hhRate<1?hhRate*100:hhRate),phat:0,ghichu:'Import Lương'});
+
+            // Add Khấu trừ
+            if(d.ungluong > 0){
+              DB.khautru.push({id: genId(), nvId: nv.id, monthKey: mk, loai: 'ungluong', ngay: '', sotien: d.ungluong, lanUng: 1, ghichu: 'Import Lương' + (d.lydo ? ' - ' + d.lydo : '')});
             }
-            // Khấu trừ
-            DB.khautru=DB.khautru.filter(k=>!(k.nvId===nv.id&&k.monthKey===mk&&(k.loai==='ungluong'||k.loai==='chitien'||k.loai==='phattien')));
-            if(ungluong>0){
-              DB.khautru.push({id:genId(),nvId:nv.id,monthKey:mk,loai:'ungluong',ngay:'',sotien:ungluong,lanUng:1,ghichu:'Import Lương'+(lydo?' - '+lydo:'')});
-            }
-            if(trukhac>0){
-              DB.khautru.push({id:genId(),nvId:nv.id,monthKey:mk,loai:'chitien',ngay:'',sotien:trukhac,lanUng:0,ghichu:'Import Lương'+(lydo?' - '+lydo:'')});
+            if(d.trukhac > 0){
+              DB.khautru.push({id: genId(), nvId: nv.id, monthKey: mk, loai: 'chitien', ngay: '', sotien: d.trukhac, lanUng: 0, ghichu: 'Import Lương' + (d.lydo ? ' - ' + d.lydo : '')});
             }
             imported++;
-          }
-          DB.save('nhanvien');DB.save('chamcong');DB.save('phucap');DB.save('kpis');DB.save('khautru');
-          log('✅ Lương: Import '+imported+' NV'+(created?' (tạo mới '+created+')':''));
-          totalImported+=imported;
+          });
+
+          DB.save('nhanvien'); DB.save('chamcong'); DB.save('phucap'); DB.save('kpis'); DB.save('khautru');
+          log('✅ Lương: Import ' + imported + ' NV' + (created ? ' (tạo mới ' + created + ')' : ''));
+          totalImported += imported;
         }
       }catch(e){log('❌ Lương lỗi: '+e.message);}
     }
