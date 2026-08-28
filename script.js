@@ -511,8 +511,12 @@ function calcAllSalary(){
     // KPI income
     const myKPIs=DB.kpis.filter(k=>k.nvId===nv.id&&k.monthKey===mk);
     let dsKPI=0,luongKPI=0;
-    if (cc && cc.ghichu && cc.ghichu.includes('Import')) {
-      luongKPI = cc.luongkpi || 0;
+    const salKpiRec=myKPIs.find(k=>(k.ghichu==='Import file lương'||k.ghichu==='Import Lương')&&k.luongkpi>0);
+    if(salKpiRec){
+      luongKPI=salKpiRec.luongkpi||0;
+      dsKPI=salKpiRec.dsthuc||0;
+    } else if(cc && cc.luongkpi !== undefined && cc.luongkpi !== null && !isNaN(cc.luongkpi) && cc.luongkpi > 0){
+      luongKPI = cc.luongkpi;
       dsKPI = cc.dsKPI || 0;
     } else if(myKPIs.length > 0){
       myKPIs.forEach(k => {
@@ -534,9 +538,6 @@ function calcAllSalary(){
         kAmt -= (k.phat || 0);
         luongKPI += kAmt;
       });
-    } else if(cc && cc.luongkpi > 0){
-      luongKPI = cc.luongkpi;
-      dsKPI = cc.dsKPI || 0;
     }
 
     // Overtime: OT_hours × LCB / NCC / giờ_chuẩn × 1.5
