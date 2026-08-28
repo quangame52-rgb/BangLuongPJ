@@ -511,33 +511,38 @@ function calcAllSalary(){
     // KPI income
     const myKPIs=DB.kpis.filter(k=>k.nvId===nv.id&&k.monthKey===mk);
     let dsKPI=0,luongKPI=0;
-    const salKpiRec=myKPIs.find(k=>(k.ghichu==='Import file lương'||k.ghichu==='Import Lương')&&k.luongkpi>0);
-    if(salKpiRec){
-      luongKPI=salKpiRec.luongkpi||0;
-      dsKPI=salKpiRec.dsthuc||0;
-    } else if(cc && cc.luongkpi !== undefined && cc.luongkpi !== null && !isNaN(cc.luongkpi) && cc.luongkpi > 0){
-      luongKPI = cc.luongkpi;
+    if (cc && cc.hasSalaryImport) {
+      luongKPI = cc.luongkpi || 0;
       dsKPI = cc.dsKPI || 0;
-    } else if(myKPIs.length > 0){
-      myKPIs.forEach(k => {
-        if (k.vaitro !== 'Tele' && k.dsthuc > 100) {
-          dsKPI += k.dsthuc;
-        } else if (dsKPI === 0) {
-          dsKPI = k.dsthuc;
-        }
-        let kAmt = 0;
-        if (k.luongkpi !== undefined && k.luongkpi !== null && !isNaN(k.luongkpi) && k.luongkpi > 0) {
-          kAmt = k.luongkpi;
-        } else if (k.vaitro === 'Tele' || /tele/i.test(k.vaitro) || k.hoahong === 30000 || k.hoahong === 40000) {
-          let rate = k.hoahong;
-          if (!rate) rate = k.dsthuc >= rules.tele.t1 ? rules.tele.r2 : rules.tele.r1;
-          kAmt = Math.round(k.dsthuc * rate);
-        } else {
-          kAmt = Math.round(k.dsthuc * k.hoahong / 100);
-        }
-        kAmt -= (k.phat || 0);
-        luongKPI += kAmt;
-      });
+    } else {
+      const salKpiRec=myKPIs.find(k=>(k.ghichu==='Import file lương'||k.ghichu==='Import Lương')&&k.luongkpi>0);
+      if(salKpiRec){
+        luongKPI=salKpiRec.luongkpi||0;
+        dsKPI=salKpiRec.dsthuc||0;
+      } else if(cc && cc.luongkpi !== undefined && cc.luongkpi !== null && !isNaN(cc.luongkpi) && cc.luongkpi > 0){
+        luongKPI = cc.luongkpi;
+        dsKPI = cc.dsKPI || 0;
+      } else if(myKPIs.length > 0){
+        myKPIs.forEach(k => {
+          if (k.vaitro !== 'Tele' && k.dsthuc > 100) {
+            dsKPI += k.dsthuc;
+          } else if (dsKPI === 0) {
+            dsKPI = k.dsthuc;
+          }
+          let kAmt = 0;
+          if (k.luongkpi !== undefined && k.luongkpi !== null && !isNaN(k.luongkpi) && k.luongkpi > 0) {
+            kAmt = k.luongkpi;
+          } else if (k.vaitro === 'Tele' || /tele/i.test(k.vaitro) || k.hoahong === 30000 || k.hoahong === 40000) {
+            let rate = k.hoahong;
+            if (!rate) rate = k.dsthuc >= rules.tele.t1 ? rules.tele.r2 : rules.tele.r1;
+            kAmt = Math.round(k.dsthuc * rate);
+          } else {
+            kAmt = Math.round(k.dsthuc * k.hoahong / 100);
+          }
+          kAmt -= (k.phat || 0);
+          luongKPI += kAmt;
+        });
+      }
     }
 
     // Overtime: OT_hours × LCB / NCC / giờ_chuẩn × 1.5
@@ -3165,6 +3170,7 @@ function confirmSalaryImport(){
         tourAmt:d.tour||0,
         luongkpi:d.luongkpi||0,
         dsKPI:d.ds||0,
+        hasSalaryImport:true,
         ghichu:'Import file lương'
       });
     }
@@ -3415,6 +3421,9 @@ function confirmMasterImport(){
               giocongchuan: d.giocongchuan,
               chucvu: d.chucvu || nv.chucvu,
               tourAmt: d.tour,
+              luongkpi: d.luongkpi || 0,
+              dsKPI: d.ds || 0,
+              hasSalaryImport: true,
               ghichu: 'Import từ sheet Lương'
             });
 
