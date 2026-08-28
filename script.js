@@ -548,15 +548,14 @@ function calcAllSalary(){
     // Overtime: OT_hours × LCB / NCC / giờ_chuẩn × 1.5
     const gioOT=cc?(cc.gioOT||0):0;
     const tienOT=(cc && cc.tienOT !== undefined && cc.tienOT > 0) ? cc.tienOT : ((ncc>0&&giocongChuan>0)?Math.round(gioOT*luongCB/ncc/giocongChuan*1.5):0);
+    const luongNC=(cc && cc.hasSalaryImport && cc.luongnc > 0) ? cc.luongnc : luongTinh;
 
-    // Allowances - ăn trưa × công thực tế (không tính ngày lễ)
-    const pcan=cc && cc.pcan !== undefined ? cc.pcan : Math.round((nv.pcantrua !== undefined ? nv.pcantrua : 25000) * congTT);
+    // Allowances
     const pcRec=DB.phucap.find(p=>p.nvId===nv.id&&p.monthKey===mk);
-    const pctn=pcRec?(pcRec.pctn||0):0;
-    const pcdl=pcRec?(pcRec.pcdl||0):0;
-    const htcd=pcRec?(pcRec.hotro!==undefined?pcRec.hotro:(pcRec.htcd||0)):0;
-    const htngayRate=pcRec?(pcRec.htngay||0):0;
-    const hotro=htcd+Math.round(htngayRate*congTT);
+    const pcan=cc?(cc.pcan||0):(pcRec?pcRec.pcan:0);
+    const pctn=pcRec?pcRec.pctn:0;
+    const pcdl=pcRec?pcRec.pcdl:0;
+    const hotro=pcRec?(pcRec.hotro||pcRec.htcd||0):0;
     const tongPC=pcan+pctn+pcdl+hotro;
     const thuong=pcRec?(pcRec.thuong||0):0;
 
@@ -568,9 +567,9 @@ function calcAllSalary(){
     const ktGhiChu=myKT.map(k=>k.ghichu).filter(Boolean).join('; ');
 
     // Totals
-    const tongThu=luongTinh+tourTotal+luongKPI+tienOT+tongPC+thuong;
+    let tongThu=(cc && cc.hasSalaryImport && cc.tongthu > 0) ? cc.tongthu : (luongTinh+tourTotal+luongKPI+tienOT+tongPC+thuong);
     const tongKhauTru=kyquyAmt+trukhac+ungluong;
-    const thuclinh=tongThu-tongKhauTru;
+    let thuclinh=(cc && cc.hasSalaryImport && cc.thuclinh > 0) ? cc.thuclinh : (tongThu-tongKhauTru);
 
     const sal={nvId:nv.id,monthKey:mk,luongcb:luongCB,giocongChuan,ncc,congTT,ngayleLam,nctl,luongTinh,
       tour:tourTotal,dsKPI,luongKPI,gioOT,tienOT,
@@ -2986,7 +2985,7 @@ function parseSalaryRows(rows){
     if(colMap.giocongchuan === undefined) colMap.giocongchuan = 4;
     if(colMap.ncc === undefined) colMap.ncc = 5;
     if(colMap.nctt === undefined) colMap.nctt = 6;
-    if(colMap.luongcb === undefined) colMap.luongcb = 7;
+    if(colMap.luongnc === undefined) colMap.luongnc = 8;
     if(colMap.tour === undefined) colMap.tour = 9;
     if(colMap.ds === undefined) colMap.ds = 10;
     if(colMap.kpipct === undefined) colMap.kpipct = 11;
@@ -2997,10 +2996,12 @@ function parseSalaryRows(rows){
     if(colMap.pctn === undefined) colMap.pctn = 16;
     if(colMap.hotro === undefined) colMap.hotro = 17;
     if(colMap.thuong === undefined) colMap.thuong = 20;
+    if(colMap.tongthu === undefined) colMap.tongthu = 22;
     if(colMap.kyquy === undefined) colMap.kyquy = 25;
     if(colMap.trukhac === undefined) colMap.trukhac = 26;
     if(colMap.ungluong === undefined) colMap.ungluong = 27;
     if(colMap.lydo === undefined) colMap.lydo = 28;
+    if(colMap.thuclinh === undefined) colMap.thuclinh = 30;
   } else {
     for(let i = 1; i < Math.min(rows.length, 6); i++){
       const first = rows[i][0];
@@ -3057,6 +3058,9 @@ function parseSalaryRows(rows){
       kyquy: colMap.kyquy !== undefined ? n(row[colMap.kyquy]) : 0,
       trukhac: colMap.trukhac !== undefined ? n(row[colMap.trukhac]) : 0,
       ungluong: colMap.ungluong !== undefined ? n(row[colMap.ungluong]) : 0,
+      luongnc: colMap.luongnc !== undefined ? n(row[colMap.luongnc]) : 0,
+      tongthu: colMap.tongthu !== undefined ? n(row[colMap.tongthu]) : 0,
+      thuclinh: colMap.thuclinh !== undefined ? n(row[colMap.thuclinh]) : 0,
       lydo: colMap.lydo !== undefined ? (row[colMap.lydo]||'').toString().trim() : '',
       matchedNV
     });
@@ -3170,6 +3174,9 @@ function confirmSalaryImport(){
         tourAmt:d.tour||0,
         luongkpi:d.luongkpi||0,
         dsKPI:d.ds||0,
+        luongnc:d.luongnc||0,
+        tongthu:d.tongthu||0,
+        thuclinh:d.thuclinh||0,
         hasSalaryImport:true,
         ghichu:'Import file lương'
       });
